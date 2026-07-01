@@ -3,6 +3,12 @@
 import { useEffect, useRef } from 'react';
 import type { RefObject } from 'react';
 
+const describeError = (error: unknown): string => {
+  if (error instanceof DOMException) return `${error.name}: ${error.message}`;
+  if (error instanceof Error) return `${error.name}: ${error.message}`;
+  return String(error);
+};
+
 export const useAudioLevel = (active: boolean, smoothing = 0.15): RefObject<number> => {
   const levelRef = useRef<number>(-1);
 
@@ -12,18 +18,33 @@ export const useAudioLevel = (active: boolean, smoothing = 0.15): RefObject<numb
       return;
     }
 
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      console.error(
+        'useAudioLevel: navigator.mediaDevices.getUserMedia is unavailable. This usually means an insecure context (use localhost or https).',
+      );
+      levelRef.current = -1;
+      return;
+    }
+
     let ctx: AudioContext | null = null;
     let stream: MediaStream | null = null;
     let raf = 0;
     let cancelled = false;
 
+    const stopStream = () => {
+      stream?.getTracks().forEach((track) => track.stop());
+      stream = null;
+    };
+
     const start = async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
         if (cancelled) {
-          stream.getTracks().forEach((track) => track.stop());
+          stopStream();
           return;
         }
+
         ctx = new AudioContext();
         const source = ctx.createMediaStreamSource(stream);
         const analyser = ctx.createAnalyser();
@@ -45,18 +66,20 @@ export const useAudioLevel = (active: boolean, smoothing = 0.15): RefObject<numb
         };
 
         raf = requestAnimationFrame(tick);
-      } catch {
+      } catch (error) {
+        console.error(`useAudioLevel: getUserMedia failed - ${describeError(error)}`);
+        stopStream();
         levelRef.current = -1;
       }
     };
 
-    start();
+    void start();
 
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
-      stream?.getTracks().forEach((track) => track.stop());
-      ctx?.close();
+      stopStream();
+      void ctx?.close();
       levelRef.current = -1;
     };
   }, [active, smoothing]);
