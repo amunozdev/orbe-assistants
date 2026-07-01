@@ -55,12 +55,6 @@ const Page = async () => {
       </header>
 
       <Gallery orbs={data} />
-
-      <footer className="mt-16 border-t border-border pt-6 text-sm text-muted">
-        How do you take an orb with you? Each card ships the full code (<span className="font-mono text-foreground">View code</span>{' '}
-        + Copy) and an <span className="font-mono text-foreground">AI prompt</span>. More details in{' '}
-        <span className="font-mono text-foreground">docs/distribution.md</span>.
-      </footer>
     </main>
   );
 };
