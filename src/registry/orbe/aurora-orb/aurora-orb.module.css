@@ -1,0 +1,112 @@
+.orb {
+  --orb-size: 168px;
+  --orb-speed: 1;
+  --orb-color-from: #22d3ee;
+  --orb-color-to: #a855f7;
+  --orb-level: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--orb-size);
+  height: var(--orb-size);
+  border-radius: 50%;
+  overflow: hidden;
+  isolation: isolate;
+  background: radial-gradient(circle at 50% 60%, #0b1020, #05070f 75%);
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
+}
+
+.veil {
+  position: absolute;
+  inset: -30%;
+  border-radius: 45%;
+  mix-blend-mode: screen;
+  opacity: calc(0.45 + 0.4 * var(--orb-level));
+  filter: blur(calc(12px + 10px * var(--orb-level)));
+  transform-origin: 50% 50%;
+}
+
+.veil1 {
+  background: conic-gradient(
+    from 0deg,
+    transparent,
+    var(--orb-color-from),
+    transparent 55%
+  );
+  animation: orb-swirl calc(9s / var(--orb-speed)) linear infinite;
+}
+
+.veil2 {
+  background: conic-gradient(
+    from 140deg,
+    transparent,
+    var(--orb-color-to),
+    transparent 50%
+  );
+  animation: orb-swirl calc(12s / var(--orb-speed)) linear infinite reverse;
+}
+
+.veil3 {
+  background: radial-gradient(
+    circle at 40% 35%,
+    color-mix(in oklab, var(--orb-color-from), #fff 20%),
+    transparent 55%
+  );
+  animation: orb-drift calc(7s / var(--orb-speed)) ease-in-out infinite;
+}
+
+.sheen {
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, rgba(255, 255, 255, 0.28), transparent 45%);
+  transform: scale(calc(1 + 0.06 * var(--orb-level)));
+  transition: transform 0.12s linear;
+}
+
+.rim {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 20px color-mix(in oklab, var(--orb-color-from), transparent 60%),
+    0 0 calc(14px + 30px * var(--orb-level)) color-mix(in oklab, var(--orb-color-to), transparent 55%);
+}
+
+.orb[data-state='error'] {
+  --orb-color-from: #fb7185;
+  --orb-color-to: #f43f5e;
+}
+
+.orb[data-state='disabled'] {
+  filter: grayscale(0.85);
+  opacity: 0.5;
+}
+
+.orb[data-state='disabled'] .veil {
+  animation: none;
+}
+
+@keyframes orb-swirl {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orb-drift {
+  0%,
+  100% {
+    transform: translate(-8%, 6%) scale(1);
+  }
+  50% {
+    transform: translate(10%, -8%) scale(1.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .veil {
+    animation: none;
+  }
+}

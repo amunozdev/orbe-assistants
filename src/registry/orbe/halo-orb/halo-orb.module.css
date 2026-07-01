@@ -1,0 +1,111 @@
+.orb {
+  --orb-size: 168px;
+  --orb-speed: 1;
+  --orb-color-from: #818cf8;
+  --orb-color-to: #f472b6;
+  --orb-level: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--orb-size);
+  height: var(--orb-size);
+  isolation: isolate;
+}
+
+.halo {
+  position: absolute;
+  width: 96%;
+  height: 96%;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    var(--orb-color-from),
+    var(--orb-color-to),
+    var(--orb-color-from)
+  );
+  padding: 6%;
+  -webkit-mask:
+    radial-gradient(farthest-side, transparent calc(72% - 4px), #000 calc(72% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(72% - 4px), #000 calc(72% - 3px));
+  opacity: calc(0.6 + 0.4 * var(--orb-level));
+  filter: blur(0.5px) drop-shadow(0 0 calc(6px + 16px * var(--orb-level))
+      color-mix(in oklab, var(--orb-color-to), transparent 45%));
+  animation: orb-spin calc(6s / var(--orb-speed)) linear infinite;
+}
+
+.orbit {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid color-mix(in oklab, var(--orb-color-from), transparent 55%);
+  opacity: 0.5;
+}
+
+.orbit1 {
+  width: 60%;
+  height: 60%;
+  border-top-color: var(--orb-color-to);
+  animation: orb-spin calc(3.4s / var(--orb-speed)) linear infinite;
+}
+
+.orbit2 {
+  width: 78%;
+  height: 78%;
+  border-bottom-color: var(--orb-color-from);
+  animation: orb-spin calc(4.6s / var(--orb-speed)) linear infinite reverse;
+}
+
+.disc {
+  position: absolute;
+  width: 46%;
+  height: 46%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in oklab, var(--orb-color-from), transparent 40%), transparent 70%);
+  filter: blur(calc(4px + 8px * var(--orb-level)));
+  transform: scale(calc(1 + 0.25 * var(--orb-level)));
+  transition: transform 0.1s linear;
+}
+
+.core {
+  position: absolute;
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 30%, #fff, var(--orb-color-to));
+  box-shadow: 0 0 calc(12px + 34px * var(--orb-level))
+    color-mix(in oklab, var(--orb-color-from), transparent 40%);
+  transform: scale(calc(1 + 0.16 * var(--orb-level)));
+  transition: transform 0.08s linear;
+}
+
+.orb[data-state='connecting'] .orbit,
+.orb[data-state='thinking'] .orbit {
+  opacity: 1;
+}
+
+.orb[data-state='error'] {
+  --orb-color-from: #fb7185;
+  --orb-color-to: #f43f5e;
+}
+
+.orb[data-state='disabled'] {
+  filter: grayscale(0.85);
+  opacity: 0.5;
+}
+
+.orb[data-state='disabled'] .halo,
+.orb[data-state='disabled'] .orbit {
+  animation: none;
+}
+
+@keyframes orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .halo,
+  .orbit {
+    animation: none;
+  }
+}

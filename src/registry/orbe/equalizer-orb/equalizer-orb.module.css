@@ -1,0 +1,110 @@
+.orb {
+  --orb-size: 168px;
+  --orb-speed: 1;
+  --orb-color-from: #38bdf8;
+  --orb-color-to: #818cf8;
+  --orb-level: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--orb-size);
+  height: var(--orb-size);
+  border-radius: 50%;
+  overflow: hidden;
+  isolation: isolate;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04), transparent 70%);
+}
+
+.glow {
+  position: absolute;
+  width: 78%;
+  height: 78%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--orb-color-from), transparent 68%);
+  opacity: calc(0.25 + 0.5 * var(--orb-level));
+  filter: blur(calc(10px + 20px * var(--orb-level)));
+  transition: opacity 0.12s linear;
+}
+
+.bars {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6%;
+  width: 64%;
+  height: 64%;
+}
+
+.bar {
+  width: 8%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(to top, var(--orb-color-from), var(--orb-color-to));
+  transform: scaleY(0.18);
+  transform-origin: center;
+  box-shadow: 0 0 calc(4px + 10px * var(--orb-level))
+    color-mix(in oklab, var(--orb-color-to), transparent 55%);
+  animation: orb-eq calc(0.9s / var(--orb-speed)) ease-in-out infinite;
+}
+
+.bar1 {
+  height: 46%;
+  animation-delay: calc(-0.05s / var(--orb-speed));
+}
+.bar2 {
+  height: 68%;
+  animation-delay: calc(-0.22s / var(--orb-speed));
+}
+.bar3 {
+  height: 86%;
+  animation-delay: calc(-0.4s / var(--orb-speed));
+}
+.bar4 {
+  height: 100%;
+  animation-delay: calc(-0.1s / var(--orb-speed));
+}
+.bar5 {
+  height: 86%;
+  animation-delay: calc(-0.33s / var(--orb-speed));
+}
+.bar6 {
+  height: 68%;
+  animation-delay: calc(-0.16s / var(--orb-speed));
+}
+.bar7 {
+  height: 46%;
+  animation-delay: calc(-0.28s / var(--orb-speed));
+}
+
+.orb[data-state='error'] {
+  --orb-color-from: #fb7185;
+  --orb-color-to: #f43f5e;
+}
+
+.orb[data-state='disabled'] {
+  filter: grayscale(0.85);
+  opacity: 0.5;
+}
+
+.orb[data-state='disabled'] .bar {
+  animation: none;
+  transform: scaleY(0.2);
+}
+
+@keyframes orb-eq {
+  0%,
+  100% {
+    transform: scaleY(calc(0.16 + 0.22 * var(--orb-level)));
+  }
+  50% {
+    transform: scaleY(calc(0.28 + 1.5 * var(--orb-level)));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar {
+    animation: none;
+    transform: scaleY(calc(0.3 + 0.5 * var(--orb-level)));
+  }
+}
