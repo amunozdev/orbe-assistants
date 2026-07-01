@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "registry:build": "shadcn build",
-    "build": "shadcn build && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -28,7 +27,6 @@
     "@types/three": "^0.185.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
-    "shadcn": "^4.12.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

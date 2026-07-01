@@ -9,8 +9,6 @@ import { OrbPreview } from './orb-preview';
 import { CodeBlock } from './code-block';
 import { CopyButton } from './copy-button';
 
-const REGISTRY_BASE = 'https://orbe-assistants.vercel.app/r';
-
 export interface OrbCardData {
   id: string;
   name: string;
@@ -152,22 +150,8 @@ export const OrbCard = ({ orb }: { orb: OrbCardData }) => {
         {orb.dependencies.length > 0 && (
           <p className="font-mono text-[11px] text-muted">npm i {orb.dependencies.join(' ')}</p>
         )}
-        <div className="flex items-center gap-2 rounded-md border border-border bg-[#080a12] px-3 py-2">
-          <code className="flex-1 overflow-x-auto whitespace-nowrap font-mono text-[11px] text-[#c9d1e9]">
-            npx shadcn@latest add {REGISTRY_BASE}/{orb.id}.json
-          </code>
-          <CopyButton value={`npx shadcn@latest add ${REGISTRY_BASE}/${orb.id}.json`} label="Copiar" />
-        </div>
         <div className="flex flex-wrap gap-2">
           <CopyButton value={orb.aiPrompt} label="Copiar prompt para IA" />
-          <a
-            href={`https://v0.dev/chat/api/open?url=${encodeURIComponent(`${REGISTRY_BASE}/${orb.id}.json`)}`}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-md border border-border bg-panel px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-accent hover:text-accent"
-          >
-            Open in v0
-          </a>
           <button
             type="button"
             onClick={() => setShowCode((v) => !v)}

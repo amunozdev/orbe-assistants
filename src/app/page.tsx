@@ -53,8 +53,8 @@ const Page = async () => {
       <Gallery orbs={data} />
 
       <footer className="mt-16 border-t border-border pt-6 text-sm text-muted">
-        ¿Cómo llevarte un orbe? Cada tarjeta trae el código completo y un prompt para IA. El camino con CLI
-        (registry shadcn, <span className="font-mono text-foreground">npx shadcn add</span>) está documentado en{' '}
+        ¿Cómo llevarte un orbe? Cada tarjeta trae el código completo (<span className="font-mono text-foreground">Ver código</span>{' '}
+        + Copiar) y un <span className="font-mono text-foreground">prompt para IA</span>. Más detalles en{' '}
         <span className="font-mono text-foreground">docs/distribution.md</span>.
       </footer>
     </main>
