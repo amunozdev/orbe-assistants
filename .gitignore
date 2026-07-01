@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI tools / assistants — keep out of this public repo
+CLAUDE.md
+AGENTS.md
+.claude/
+.cursor/
+.cursorrules
+.opencode/
+.aider*
+.windsurf/
+.roo/
+.github/copilot-instructions.md
+.codeium/
+.continue/
+.mcp.json
