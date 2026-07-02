@@ -365,31 +365,32 @@ ${usageFile.code}\`\`\``,
           </div>
         )}
         {showCode && <CodeBlock files={codeFiles} />}
-        <div className="flex flex-wrap items-center gap-1.5">
+      </footer>
+
+      <div className="mt-auto flex flex-wrap items-center gap-1.5">
+        <span
+          title={costHint?.note}
+          className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
+        >
+          {orb.tech}
+        </span>
+        {costHint?.label && (
           <span
-            title={costHint?.note}
+            title={costHint.note}
             className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
           >
-            {orb.tech}
+            {costHint.label}
           </span>
-          {costHint?.label && (
-            <span
-              title={costHint.note}
-              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
-            >
-              {costHint.label}
-            </span>
-          )}
-          {orb.dependencies.length === 0 && (
-            <span
-              title="No external dependencies; copy the files and it just works."
-              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
-            >
-              Zero deps
-            </span>
-          )}
-        </div>
-      </footer>
+        )}
+        {orb.dependencies.length === 0 && (
+          <span
+            title="No external dependencies; copy the files and it just works."
+            className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
+          >
+            Zero deps
+          </span>
+        )}
+      </div>
     </article>
   );
 };
