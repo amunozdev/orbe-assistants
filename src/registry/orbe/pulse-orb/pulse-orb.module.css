@@ -380,10 +380,12 @@
   .orb .arcTurbo {
     animation: none;
   }
-  .orb[data-state='idle'] .ringSetIdle,
   .orb[data-state='listening'] .ringSetListen,
   .orb[data-state='speaking'] .ringSetSpeak {
     opacity: 1;
+  }
+  .orb[data-state='idle'] .ringSetIdle {
+    opacity: 0.5;
   }
   .ring1 {
     transform: scale(1.2);
@@ -397,7 +399,22 @@
     transform: scale(1.8);
     opacity: 0.1;
   }
-  .orb:is([data-state='connecting'], [data-state='thinking']) .arc {
-    opacity: 0.6;
+  .orb[data-state='speaking'] .ring1 {
+    transform: scale(1.35);
+    opacity: 0.5;
+  }
+  .orb[data-state='speaking'] .ring2 {
+    transform: scale(1.7);
+    opacity: 0.34;
+  }
+  .orb[data-state='speaking'] .ring3 {
+    transform: scale(2.05);
+    opacity: 0.18;
+  }
+  .orb[data-state='connecting'] .arc {
+    opacity: 0.45;
+  }
+  .orb[data-state='thinking'] .arc {
+    opacity: 0.9;
   }
 }

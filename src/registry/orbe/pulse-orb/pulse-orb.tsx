@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { orbVars, type OrbProps } from '../../lib/orb-state';
 import { useOrbLevel } from '../../lib/use-orb-level';
 import styles from './pulse-orb.module.css';
@@ -14,14 +14,23 @@ export const PulseOrb = ({
   levelRef,
   label = 'Assistant orb',
   className,
+  ref,
 }: OrbProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useOrbLevel(ref, state, levelRef);
+  const internalRef = useRef<HTMLDivElement | null>(null);
+  useOrbLevel(internalRef, state, levelRef);
+  const setRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      internalRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref],
+  );
   const ringSets = [styles.ringSetIdle, styles.ringSetListen, styles.ringSetSpeak];
 
   return (
     <div
-      ref={ref}
+      ref={setRef}
       role="img"
       aria-label={label}
       data-state={state}
