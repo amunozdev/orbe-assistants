@@ -196,9 +196,9 @@ ${usageFile.code}\`\`\``,
       id={orb.id}
       className="flex scroll-mt-20 flex-col gap-5 rounded-2xl border border-border bg-panel/60 p-5"
     >
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="text-lg font-semibold">
+      <header className="flex flex-col gap-2">
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="min-w-0 text-lg font-semibold">
             {orb.name}
             <a
               href={`#${orb.id}`}
@@ -208,40 +208,32 @@ ${usageFile.code}\`\`\``,
               #
             </a>
           </h2>
-          <p className="mt-1 text-sm text-muted">{orb.tagline}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0 sm:justify-end">
-          {!hideDetailsLink && (
-            <Link
-              href={`/orbs/${orb.id}`}
-              className="rounded-md border border-border bg-panel px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-accent hover:text-accent-foreground"
-            >
-              Details →
-            </Link>
-          )}
-          <span
-            title={costHint?.note}
-            className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
-          >
-            {orb.tech}
-          </span>
-          {costHint?.label && (
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
             <span
-              title={costHint.note}
+              title={costHint?.note}
               className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
             >
-              {costHint.label}
+              {orb.tech}
             </span>
-          )}
-          {orb.dependencies.length === 0 && (
-            <span
-              title="No external dependencies; copy the files and it just works."
-              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
-            >
-              Zero deps
-            </span>
-          )}
+            {costHint?.label && (
+              <span
+                title={costHint.note}
+                className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
+              >
+                {costHint.label}
+              </span>
+            )}
+            {orb.dependencies.length === 0 && (
+              <span
+                title="No external dependencies; copy the files and it just works."
+                className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
+              >
+                Zero deps
+              </span>
+            )}
+          </div>
         </div>
+        <p className="text-sm text-muted">{orb.tagline}</p>
       </header>
 
       <div className="grid min-h-64 place-items-center rounded-xl border border-border bg-[radial-gradient(circle_at_50%_30%,var(--orb-stage-from),var(--orb-stage-to))]">
@@ -385,6 +377,14 @@ ${usageFile.code}\`\`\``,
             shared={shared}
             config={{ state, size, speed, colorFrom, colorTo }}
           />
+          {!hideDetailsLink && (
+            <Link
+              href={`/orbs/${orb.id}`}
+              className="ml-auto rounded-md border border-border bg-panel px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-accent hover:text-accent-foreground"
+            >
+              Details →
+            </Link>
+          )}
         </div>
         {orb.dependencies.length > 0 && <InstallBlock dependencies={orb.dependencies} />}
         {showPrompt && (
