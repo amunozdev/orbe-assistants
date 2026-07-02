@@ -265,6 +265,7 @@ export const orbs: OrbMeta[] = [
     defaultSize: 168,
     files: [
       { label: 'edge-glow.tsx', path: 'src/registry/orbe/edge-glow/edge-glow.tsx', lang: 'tsx' },
+      { label: 'edge-glow.module.css', path: 'src/registry/orbe/edge-glow/edge-glow.module.css', lang: 'css' },
     ],
   },
   {
