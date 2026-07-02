@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { orbVars, type OrbProps } from '../../lib/orb-state';
+import {
+  approach,
+  createStateMix,
+  orbVars,
+  type OrbProps,
+  type OrbState,
+} from '../../lib/orb-state';
 import { useOrbLevel } from '../../lib/use-orb-level';
 
 const TWO_PI = Math.PI * 2;
@@ -52,6 +58,9 @@ const mix = (a: Rgb, b: Rgb, t: number): Rgb => [
 ];
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
+const spinFor = (st: OrbState): number =>
+  st === 'thinking' ? 3.2 : st === 'connecting' ? 1.6 : st === 'error' ? 0.5 : st === 'disabled' ? 0.3 : 1;
 
 const rgba = (c: Rgb, a: number) =>
   `rgba(${Math.round(c[0])}, ${Math.round(c[1])}, ${Math.round(c[2])}, ${clamp01(a).toFixed(3)})`;
@@ -425,8 +434,10 @@ export const GalaxyOrb = ({
     let last: number | null = null;
     let t = 0;
     let running = false;
-    let prevState = '';
-    let stateStart = 0;
+    let spinCur = spinFor(stateRef.current);
+    let levelS = 0;
+    let connectT = 0;
+    const stateMix = createStateMix(stateRef.current);
 
     const drawSprite = (img: HTMLCanvasElement, scale: number, alpha: number) => {
       ctx.save();
@@ -438,23 +449,25 @@ export const GalaxyOrb = ({
       ctx.restore();
     };
 
-    const render = (dt: number) => {
+    const render = (dt: number, isStatic = false) => {
       ensurePalette();
       const st = stateRef.current;
       const spd = speedRef.current;
-      if (st !== prevState) {
-        prevState = st;
-        stateStart = t;
-      }
-      const stateT = t - stateStart;
-      const level = clamp01(
+      const anim = !isStatic;
+      const easeDt = isStatic ? 60 : dt;
+      const w = stateMix.update(st, easeDt);
+      const wError = w.error;
+      const wDisabled = w.disabled;
+      const wSpeak = w.speaking;
+      const wListen = w.listening;
+      const wConn = anim ? w.connecting : 0;
+      const rawLevel = clamp01(
         Number.parseFloat(getComputedStyle(host).getPropertyValue('--orb-level')) || 0,
       );
-      const isError = st === 'error';
-      const anim = dt > 0;
-      const spin =
-        st === 'thinking' ? 3.2 : st === 'connecting' ? 1.6 : isError ? 0.5 : st === 'disabled' ? 0.3 : 1;
-      const drive = dt * spd * spin;
+      levelS = approach(levelS, rawLevel, 8, easeDt);
+      const level = clamp01(levelS);
+      spinCur = approach(spinCur, spinFor(st), 6, easeDt);
+      const drive = dt * spd * spinCur;
       spriteA += SPRITE_OMEGA * drive;
       rimOff += RIM_OMEGA * dt * spd;
       for (let k = 0; k < layerOff.length; k += 1) layerOff[k] += LAYER_OMEGA[k] * drive;
@@ -464,15 +477,18 @@ export const GalaxyOrb = ({
 
       let reveal = 1;
       let revealFade = 1;
-      const connecting = st === 'connecting' && anim;
-      if (connecting) {
-        const cyc = (stateT * 0.55 * spd) % 1.4;
+      if (wConn > 0.004) {
+        connectT += dt * spd;
+        const cyc = (connectT * 0.55) % 1.4;
         reveal = Math.min(1.15, cyc / 0.95);
         revealFade = cyc > 1.25 ? Math.max(0.15, 1 - ((cyc - 1.25) / 0.15) * 0.85) : 1;
+      } else {
+        connectT = 0;
       }
 
-      const jx = isError && anim ? Math.sin(t * 29.3) * 0.9 + Math.sin(t * 17.1) * 0.6 : 0;
-      const jy = isError && anim ? Math.cos(t * 23.7) * 0.9 + Math.sin(t * 13.3) * 0.6 : 0;
+      const jAmp = anim ? wError : 0;
+      const jx = jAmp > 0.004 ? (Math.sin(t * 29.3) * 0.9 + Math.sin(t * 17.1) * 0.6) * jAmp : 0;
+      const jy = jAmp > 0.004 ? (Math.cos(t * 23.7) * 0.9 + Math.sin(t * 13.3) * 0.6) * jAmp : 0;
 
       ctx.clearRect(0, 0, size, size);
 
@@ -487,8 +503,7 @@ export const GalaxyOrb = ({
 
       if (bloomG) {
         ctx.globalAlpha = clamp01(
-          (0.22 + (st === 'speaking' ? level * 0.14 : 0)) *
-            (isError ? 0.6 : st === 'disabled' ? 0.5 : 1),
+          (0.22 + level * 0.14 * wSpeak) * (1 - 0.4 * wError - 0.5 * wDisabled),
         );
         ctx.fillStyle = bloomG;
         ctx.fillRect(0, 0, size, size);
@@ -505,9 +520,10 @@ export const GalaxyOrb = ({
       drawSprite(spriteBase, 1, 1);
 
       ctx.globalCompositeOperation = 'lighter';
-      const starBoost = (0.68 + level * 0.5) * (isError ? 0.85 : 1);
+      const starBoost = (0.68 + level * 0.5) * (1 - 0.15 * wError);
       const drawStar = (sr: Star) => {
-        const vis = connecting ? clamp01((reveal - sr.u) * 10) * revealFade : 1;
+        const vis =
+          wConn > 0.004 ? 1 + (clamp01((reveal - sr.u) * 10) * revealFade - 1) * wConn : 1;
         if (vis <= 0.004) return;
         const ang = sr.a + layerOff[sr.layer];
         const rr = sr.r * Rl;
@@ -539,26 +555,26 @@ export const GalaxyOrb = ({
 
       for (const sr of STAR_LAYERS[0]) drawStar(sr);
 
-      const nebScale = st === 'listening' ? 1 + level * 0.35 : 1 + 0.02 * Math.sin(t * 0.6);
-      const nebAlpha = connecting
-        ? 0.3 + 0.7 * Math.min(1, reveal)
-        : isError
-          ? 0.5
-          : 0.9 + (st === 'speaking' ? level * 0.1 : 0);
+      const nebScale = 1 + wListen * level * 0.35 + (1 - wListen) * 0.02 * Math.sin(t * 0.6);
+      const nebBase = 0.9 + level * 0.1 * wSpeak;
+      const nebConn = 0.3 + 0.7 * Math.min(1, reveal) * revealFade;
+      const nebAlpha = nebBase + wConn * (nebConn - nebBase) + wError * (0.5 - nebBase);
       drawSprite(spriteNebula, nebScale, nebAlpha);
-      drawSprite(spriteArms, 1, isError ? 0.65 : 0.88 + (st === 'speaking' ? level * 0.12 : 0));
+      const armsBase = 0.88 + level * 0.12 * wSpeak;
+      drawSprite(spriteArms, 1, armsBase + wError * (0.65 - armsBase));
 
       for (const sr of STAR_LAYERS[1]) drawStar(sr);
       for (const sr of STAR_LAYERS[2]) drawStar(sr);
 
-      if (st === 'speaking' && speakG && level > 0.01) {
-        ctx.globalAlpha = level * 0.15;
+      const speakA = level * 0.15 * wSpeak;
+      if (speakG && speakA > 0.004) {
+        ctx.globalAlpha = speakA;
         ctx.fillStyle = speakG;
         ctx.fillRect(0, 0, size, size);
         ctx.globalAlpha = 1;
       }
-      if (isError) {
-        ctx.globalAlpha = 0.14;
+      if (wError > 0.004) {
+        ctx.globalAlpha = 0.14 * wError;
         ctx.fillStyle = errWashG;
         ctx.fillRect(0, 0, size, size);
         ctx.globalAlpha = 1;
@@ -566,10 +582,16 @@ export const GalaxyOrb = ({
       ctx.restore();
 
       ctx.globalCompositeOperation = 'screen';
-      const fres = isError ? errFresG : fresG;
-      if (fres) {
-        ctx.globalAlpha = clamp01(0.45 + (st === 'speaking' ? level * 0.12 : 0));
-        ctx.fillStyle = fres;
+      const fresA = clamp01(0.45 + level * 0.12 * wSpeak);
+      if (fresG && fresA * (1 - wError) > 0.004) {
+        ctx.globalAlpha = fresA * (1 - wError);
+        ctx.fillStyle = fresG;
+        ctx.fillRect(0, 0, size, size);
+        ctx.globalAlpha = 1;
+      }
+      if (fresA * wError > 0.004) {
+        ctx.globalAlpha = fresA * wError;
+        ctx.fillStyle = errFresG;
         ctx.fillRect(0, 0, size, size);
         ctx.globalAlpha = 1;
       }
@@ -613,38 +635,39 @@ export const GalaxyOrb = ({
 
       const rimW = 2 + level;
       const rimR = Rl - rimW / 2 - 0.35;
-      const rimA = clamp01((0.5 + level * 0.45) * (st === 'disabled' ? 0.45 : 1));
+      const rimA = clamp01((0.5 + level * 0.45) * (1 - 0.55 * wDisabled)) * (1 - wError);
       ctx.globalCompositeOperation = 'screen';
-      if (isError) {
-        ctx.strokeStyle = rgba(ERROR_RGB, 0.55 + 0.3 * Math.sin(t * 9));
+      if (wError > 0.004) {
+        ctx.strokeStyle = rgba(ERROR_RGB, (0.55 + 0.3 * Math.sin(t * 9)) * wError);
         ctx.lineWidth = 2.4;
         ctx.beginPath();
         ctx.arc(cx, cy, rimR, 0, TWO_PI);
         ctx.stroke();
-      } else if (rimG) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(rimOff);
-        ctx.globalAlpha = rimA;
-        ctx.strokeStyle = rimG;
-        ctx.lineWidth = rimW;
-        ctx.beginPath();
-        ctx.arc(0, 0, rimR, 0, TWO_PI);
-        ctx.stroke();
-        ctx.restore();
-      } else {
-        const seg = 48;
-        ctx.lineWidth = rimW;
-        for (let i = 0; i < seg; i += 1) {
-          const u = i / seg;
-          const a0 = rimOff + u * TWO_PI;
-          ctx.strokeStyle = rgba(rimColorAt(u, from, to), rimA);
-          ctx.beginPath();
-          ctx.arc(cx, cy, rimR, a0, a0 + (TWO_PI / seg) * 1.5);
-          ctx.stroke();
-        }
       }
-      if (!isError) {
+      if (rimA > 0.004) {
+        if (rimG) {
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(rimOff);
+          ctx.globalAlpha = rimA;
+          ctx.strokeStyle = rimG;
+          ctx.lineWidth = rimW;
+          ctx.beginPath();
+          ctx.arc(0, 0, rimR, 0, TWO_PI);
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          const seg = 48;
+          ctx.lineWidth = rimW;
+          for (let i = 0; i < seg; i += 1) {
+            const u = i / seg;
+            const a0 = rimOff + u * TWO_PI;
+            ctx.strokeStyle = rgba(rimColorAt(u, from, to), rimA);
+            ctx.beginPath();
+            ctx.arc(cx, cy, rimR, a0, a0 + (TWO_PI / seg) * 1.5);
+            ctx.stroke();
+          }
+        }
         ctx.globalAlpha = rimA * 0.7;
         ctx.lineWidth = 1;
         ctx.strokeStyle = abFrom;
@@ -671,7 +694,7 @@ export const GalaxyOrb = ({
 
     const renderStatic = () => {
       if (t === 0) t = 5.3;
-      render(0);
+      render(0, true);
     };
 
     const startLoop = () => {
@@ -722,7 +745,8 @@ export const GalaxyOrb = ({
         display: 'grid',
         placeItems: 'center',
         opacity: state === 'disabled' ? 0.5 : 1,
-        filter: state === 'disabled' ? 'grayscale(0.85)' : undefined,
+        filter: state === 'disabled' ? 'grayscale(0.85)' : 'grayscale(0)',
+        transition: 'opacity 300ms ease, filter 300ms ease',
       }}
     >
       <canvas ref={canvasRef} style={{ width: size, height: size }} />
