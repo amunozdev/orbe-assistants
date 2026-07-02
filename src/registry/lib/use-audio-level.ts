@@ -72,6 +72,12 @@ export const classifyAudioError = (error: unknown): AudioLevelError =>
 export const hasAudioInputSupport = (): boolean =>
   typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia);
 
+const VOICE_MIN_HZ = 85;
+const VOICE_MAX_HZ = 3800;
+const LEVEL_FLOOR = 0.14;
+const LEVEL_RANGE = 0.62;
+const PEAK_WEIGHT = 0.35;
+
 export interface AudioLevel {
   levelRef: RefObject<number>;
   error: AudioLevelError | null;
@@ -94,15 +100,28 @@ export const useAudioLevel = (active: boolean, smoothing = 0.15): AudioLevel => 
       (analyser) => {
         if (cancelled) return;
         setError(null);
-        const data = new Uint8Array(analyser.frequencyBinCount);
+        const bins = analyser.frequencyBinCount;
+        const nyquist = analyser.context.sampleRate / 2;
+        const binFor = (hz: number) =>
+          Math.min(bins, Math.max(1, Math.round((hz / nyquist) * bins)));
+        const voiceLo = binFor(VOICE_MIN_HZ);
+        const voiceHi = Math.max(voiceLo + 1, binFor(VOICE_MAX_HZ));
+        const data = new Uint8Array(bins);
         let smoothed = 0;
 
         const tick = () => {
           analyser.getByteFrequencyData(data);
           let sum = 0;
-          for (let i = 0; i < data.length; i += 1) sum += data[i];
-          const avg = sum / data.length / 255;
-          const norm = Math.min(1, Math.max(0, (avg - 0.06) / 0.4));
+          let peak = 0;
+          for (let i = voiceLo; i < voiceHi; i += 1) {
+            const value = data[i];
+            sum += value;
+            if (value > peak) peak = value;
+          }
+          const bandAvg = sum / (voiceHi - voiceLo) / 255;
+          const bandPeak = peak / 255;
+          const energy = (1 - PEAK_WEIGHT) * bandAvg + PEAK_WEIGHT * bandPeak;
+          const norm = Math.min(1, Math.max(0, (energy - LEVEL_FLOOR) / LEVEL_RANGE));
           smoothed += (norm - smoothed) * smoothing;
           levelRef.current = smoothed;
           raf = requestAnimationFrame(tick);
