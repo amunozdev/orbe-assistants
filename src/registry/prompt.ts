@@ -48,7 +48,7 @@ import { ${component} } from '@/${componentPath}';
 
 export const AssistantOrb = () => {
   const [state, setState] = useState<OrbState>('idle');
-  const levelRef = useAudioLevel(state === 'listening');
+  const { levelRef } = useAudioLevel(state === 'listening');
   return <${component} state={state} levelRef={levelRef} />;
 };
 \`\`\`

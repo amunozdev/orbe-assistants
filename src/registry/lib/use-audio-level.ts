@@ -1,16 +1,85 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 
-const describeError = (error: unknown): string => {
-  if (error instanceof DOMException) return `${error.name}: ${error.message}`;
-  if (error instanceof Error) return `${error.name}: ${error.message}`;
-  return String(error);
+export type AudioLevelError = 'permission-denied' | 'unavailable';
+
+interface SharedAudio {
+  ctx: AudioContext;
+  stream: MediaStream;
+  analyser: AnalyserNode;
+}
+
+let engine: Promise<SharedAudio> | null = null;
+let consumers = 0;
+
+const createShared = async (): Promise<SharedAudio> => {
+  if (!hasAudioInputSupport()) {
+    throw new DOMException(
+      'getUserMedia is unavailable. This usually means an insecure context (use localhost or https).',
+      'NotSupportedError',
+    );
+  }
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const ctx = new AudioContext();
+  if (ctx.state === 'suspended') void ctx.resume();
+  const source = ctx.createMediaStreamSource(stream);
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 512;
+  analyser.smoothingTimeConstant = 0.7;
+  source.connect(analyser);
+  return { ctx, stream, analyser };
 };
 
-export const useAudioLevel = (active: boolean, smoothing = 0.15): RefObject<number> => {
+const teardown = () => {
+  const current = engine;
+  engine = null;
+  if (!current) return;
+  void current.then(
+    (shared) => {
+      shared.stream.getTracks().forEach((track) => track.stop());
+      void shared.ctx.close();
+    },
+    () => {},
+  );
+};
+
+export const acquireSharedAnalyser = (): Promise<AnalyserNode> => {
+  consumers += 1;
+  if (!engine) engine = createShared();
+  const current = engine;
+  return current.then(
+    (shared) => shared.analyser,
+    (error: unknown) => {
+      if (engine === current) engine = null;
+      throw error;
+    },
+  );
+};
+
+export const releaseSharedAnalyser = () => {
+  consumers = Math.max(0, consumers - 1);
+  if (consumers === 0) teardown();
+};
+
+export const classifyAudioError = (error: unknown): AudioLevelError =>
+  error instanceof DOMException &&
+  (error.name === 'NotAllowedError' || error.name === 'SecurityError')
+    ? 'permission-denied'
+    : 'unavailable';
+
+export const hasAudioInputSupport = (): boolean =>
+  typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getUserMedia);
+
+export interface AudioLevel {
+  levelRef: RefObject<number>;
+  error: AudioLevelError | null;
+}
+
+export const useAudioLevel = (active: boolean, smoothing = 0.15): AudioLevel => {
   const levelRef = useRef<number>(-1);
+  const [error, setError] = useState<AudioLevelError | null>(null);
 
   useEffect(() => {
     if (!active) {
@@ -18,39 +87,13 @@ export const useAudioLevel = (active: boolean, smoothing = 0.15): RefObject<numb
       return;
     }
 
-    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-      console.error(
-        'useAudioLevel: navigator.mediaDevices.getUserMedia is unavailable. This usually means an insecure context (use localhost or https).',
-      );
-      levelRef.current = -1;
-      return;
-    }
-
-    let ctx: AudioContext | null = null;
-    let stream: MediaStream | null = null;
-    let raf = 0;
     let cancelled = false;
+    let raf = 0;
 
-    const stopStream = () => {
-      stream?.getTracks().forEach((track) => track.stop());
-      stream = null;
-    };
-
-    const start = async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-        if (cancelled) {
-          stopStream();
-          return;
-        }
-
-        ctx = new AudioContext();
-        const source = ctx.createMediaStreamSource(stream);
-        const analyser = ctx.createAnalyser();
-        analyser.fftSize = 1024;
-        source.connect(analyser);
-
+    void acquireSharedAnalyser().then(
+      (analyser) => {
+        if (cancelled) return;
+        setError(null);
         const data = new Uint8Array(analyser.frequencyBinCount);
         let smoothed = 0;
 
@@ -66,23 +109,21 @@ export const useAudioLevel = (active: boolean, smoothing = 0.15): RefObject<numb
         };
 
         raf = requestAnimationFrame(tick);
-      } catch (error) {
-        console.error(`useAudioLevel: getUserMedia failed - ${describeError(error)}`);
-        stopStream();
+      },
+      (err: unknown) => {
+        if (cancelled) return;
+        setError(classifyAudioError(err));
         levelRef.current = -1;
-      }
-    };
-
-    void start();
+      },
+    );
 
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
-      stopStream();
-      void ctx?.close();
+      releaseSharedAnalyser();
       levelRef.current = -1;
     };
   }, [active, smoothing]);
 
-  return levelRef;
+  return { levelRef, error };
 };

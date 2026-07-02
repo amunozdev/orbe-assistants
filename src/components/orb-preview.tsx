@@ -12,6 +12,10 @@ import { ParticlesOrb } from '@/registry/orbe/particles-orb/particles-orb';
 import { EqualizerOrb } from '@/registry/orbe/equalizer-orb/equalizer-orb';
 import { AuroraOrb } from '@/registry/orbe/aurora-orb/aurora-orb';
 import { HaloOrb } from '@/registry/orbe/halo-orb/halo-orb';
+import { WaveformRing } from '@/registry/orbe/waveform-ring/waveform-ring';
+import { EdgeGlow } from '@/registry/orbe/edge-glow/edge-glow';
+import { IridescentFlow } from '@/registry/orbe/iridescent-flow/iridescent-flow';
+import { LiquidMetal } from '@/registry/orbe/liquid-metal/liquid-metal';
 import type { OrbProps } from '@/registry/lib/orb-state';
 
 const MAP: Record<string, ComponentType<OrbProps>> = {
@@ -26,6 +30,10 @@ const MAP: Record<string, ComponentType<OrbProps>> = {
   'equalizer-orb': EqualizerOrb,
   'aurora-orb': AuroraOrb,
   'halo-orb': HaloOrb,
+  'waveform-ring': WaveformRing,
+  'edge-glow': EdgeGlow,
+  'iridescent-flow': IridescentFlow,
+  'liquid-metal': LiquidMetal,
 };
 
 interface OrbPreviewProps extends OrbProps {

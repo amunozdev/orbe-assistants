@@ -2,6 +2,7 @@ export interface OrbFile {
   label: string;
   path: string;
   lang: string;
+  variant?: 'css-modules' | 'tailwind';
 }
 
 export interface OrbMeta {
@@ -20,9 +21,78 @@ const SHARED_FILES: OrbFile[] = [
   { label: 'lib/orb-state.ts', path: 'src/registry/lib/orb-state.ts', lang: 'ts' },
   { label: 'lib/use-orb-level.ts', path: 'src/registry/lib/use-orb-level.ts', lang: 'ts' },
   { label: 'lib/use-audio-level.ts', path: 'src/registry/lib/use-audio-level.ts', lang: 'ts' },
+  { label: 'lib/use-in-view.ts', path: 'src/registry/lib/use-in-view.ts', lang: 'ts' },
+  { label: 'lib/use-webgl-support.ts', path: 'src/registry/lib/use-webgl-support.ts', lang: 'ts' },
+  { label: 'lib/use-audio-bands.ts', path: 'src/registry/lib/use-audio-bands.ts', lang: 'ts' },
+  { label: 'lib/use-waveform.ts', path: 'src/registry/lib/use-waveform.ts', lang: 'ts' },
+  { label: 'lib/use-orb-cues.ts', path: 'src/registry/lib/use-orb-cues.ts', lang: 'ts' },
 ];
 
 export { SHARED_FILES };
+
+export interface OrbPropMeta {
+  name: string;
+  type: string;
+  default: string;
+  description: string;
+}
+
+export const ORB_PROPS: OrbPropMeta[] = [
+  {
+    name: 'state',
+    type: "'idle' | 'connecting' | 'listening' | 'thinking' | 'speaking' | 'error' | 'disabled'",
+    default: "'idle'",
+    description: 'Assistant lifecycle state driving the animation. error and disabled are optional extensions.',
+  },
+  {
+    name: 'size',
+    type: 'number',
+    default: '160-184 (per orb)',
+    description: 'Diameter of the orb in pixels, also exposed as the --orb-size CSS variable.',
+  },
+  {
+    name: 'speed',
+    type: 'number',
+    default: '1',
+    description: 'Animation speed multiplier, also exposed as the --orb-speed CSS variable.',
+  },
+  {
+    name: 'colorFrom',
+    type: 'string',
+    default: 'per-orb gradient start',
+    description: 'Gradient start color (any CSS color), exposed as --orb-color-from.',
+  },
+  {
+    name: 'colorTo',
+    type: 'string',
+    default: 'per-orb gradient end',
+    description: 'Gradient end color (any CSS color), exposed as --orb-color-to.',
+  },
+  {
+    name: 'levelRef',
+    type: 'RefObject<number>',
+    default: 'undefined',
+    description: 'Live audio amplitude in 0..1 read every frame without re-render; a negative value falls back to the procedural animation.',
+  },
+  {
+    name: 'label',
+    type: 'string',
+    default: "'Assistant orb'",
+    description: 'Accessible name announced by screen readers via aria-label.',
+  },
+  {
+    name: 'className',
+    type: 'string',
+    default: 'undefined',
+    description: 'Extra class names merged onto the root element.',
+  },
+  {
+    name: 'ref',
+    type: 'Ref<HTMLDivElement>',
+    default: 'undefined',
+    description: 'React 19 ref to the root element for measuring, animating or scrolling into view.',
+  },
+];
 
 export const orbs: OrbMeta[] = [
   {
@@ -35,9 +105,9 @@ export const orbs: OrbMeta[] = [
     defaultColorTo: '#22d3ee',
     defaultSize: 168,
     files: [
-      { label: 'pulse-orb.tsx', path: 'src/registry/orbe/pulse-orb/pulse-orb.tsx', lang: 'tsx' },
-      { label: 'pulse-orb.module.css', path: 'src/registry/orbe/pulse-orb/pulse-orb.module.css', lang: 'css' },
-      { label: 'pulse-orb-tw.tsx (Tailwind)', path: 'src/registry/orbe/pulse-orb/pulse-orb-tw.tsx', lang: 'tsx' },
+      { label: 'pulse-orb.tsx', path: 'src/registry/orbe/pulse-orb/pulse-orb.tsx', lang: 'tsx', variant: 'css-modules' },
+      { label: 'pulse-orb.module.css', path: 'src/registry/orbe/pulse-orb/pulse-orb.module.css', lang: 'css', variant: 'css-modules' },
+      { label: 'pulse-orb-tw.tsx (Tailwind)', path: 'src/registry/orbe/pulse-orb/pulse-orb-tw.tsx', lang: 'tsx', variant: 'tailwind' },
     ],
   },
   {
@@ -50,9 +120,9 @@ export const orbs: OrbMeta[] = [
     defaultColorTo: '#38bdf8',
     defaultSize: 168,
     files: [
-      { label: 'glass-orb.tsx', path: 'src/registry/orbe/glass-orb/glass-orb.tsx', lang: 'tsx' },
-      { label: 'glass-orb.module.css', path: 'src/registry/orbe/glass-orb/glass-orb.module.css', lang: 'css' },
-      { label: 'glass-orb-tw.tsx (Tailwind)', path: 'src/registry/orbe/glass-orb/glass-orb-tw.tsx', lang: 'tsx' },
+      { label: 'glass-orb.tsx', path: 'src/registry/orbe/glass-orb/glass-orb.tsx', lang: 'tsx', variant: 'css-modules' },
+      { label: 'glass-orb.module.css', path: 'src/registry/orbe/glass-orb/glass-orb.module.css', lang: 'css', variant: 'css-modules' },
+      { label: 'glass-orb-tw.tsx (Tailwind)', path: 'src/registry/orbe/glass-orb/glass-orb-tw.tsx', lang: 'tsx', variant: 'tailwind' },
     ],
   },
   {
@@ -89,8 +159,9 @@ export const orbs: OrbMeta[] = [
     defaultColorTo: '#818cf8',
     defaultSize: 168,
     files: [
-      { label: 'equalizer-orb.tsx', path: 'src/registry/orbe/equalizer-orb/equalizer-orb.tsx', lang: 'tsx' },
-      { label: 'equalizer-orb.module.css', path: 'src/registry/orbe/equalizer-orb/equalizer-orb.module.css', lang: 'css' },
+      { label: 'equalizer-orb.tsx', path: 'src/registry/orbe/equalizer-orb/equalizer-orb.tsx', lang: 'tsx', variant: 'css-modules' },
+      { label: 'equalizer-orb.module.css', path: 'src/registry/orbe/equalizer-orb/equalizer-orb.module.css', lang: 'css', variant: 'css-modules' },
+      { label: 'equalizer-orb-tw.tsx (Tailwind)', path: 'src/registry/orbe/equalizer-orb/equalizer-orb-tw.tsx', lang: 'tsx', variant: 'tailwind' },
     ],
   },
   {
@@ -103,8 +174,9 @@ export const orbs: OrbMeta[] = [
     defaultColorTo: '#a855f7',
     defaultSize: 168,
     files: [
-      { label: 'aurora-orb.tsx', path: 'src/registry/orbe/aurora-orb/aurora-orb.tsx', lang: 'tsx' },
-      { label: 'aurora-orb.module.css', path: 'src/registry/orbe/aurora-orb/aurora-orb.module.css', lang: 'css' },
+      { label: 'aurora-orb.tsx', path: 'src/registry/orbe/aurora-orb/aurora-orb.tsx', lang: 'tsx', variant: 'css-modules' },
+      { label: 'aurora-orb.module.css', path: 'src/registry/orbe/aurora-orb/aurora-orb.module.css', lang: 'css', variant: 'css-modules' },
+      { label: 'aurora-orb-tw.tsx (Tailwind)', path: 'src/registry/orbe/aurora-orb/aurora-orb-tw.tsx', lang: 'tsx', variant: 'tailwind' },
     ],
   },
   {
@@ -117,8 +189,9 @@ export const orbs: OrbMeta[] = [
     defaultColorTo: '#f472b6',
     defaultSize: 168,
     files: [
-      { label: 'halo-orb.tsx', path: 'src/registry/orbe/halo-orb/halo-orb.tsx', lang: 'tsx' },
-      { label: 'halo-orb.module.css', path: 'src/registry/orbe/halo-orb/halo-orb.module.css', lang: 'css' },
+      { label: 'halo-orb.tsx', path: 'src/registry/orbe/halo-orb/halo-orb.tsx', lang: 'tsx', variant: 'css-modules' },
+      { label: 'halo-orb.module.css', path: 'src/registry/orbe/halo-orb/halo-orb.module.css', lang: 'css', variant: 'css-modules' },
+      { label: 'halo-orb-tw.tsx (Tailwind)', path: 'src/registry/orbe/halo-orb/halo-orb-tw.tsx', lang: 'tsx', variant: 'tailwind' },
     ],
   },
   {
@@ -166,6 +239,58 @@ export const orbs: OrbMeta[] = [
     files: [
       { label: 'nebula-orb.tsx', path: 'src/registry/orbe/nebula-orb/nebula-orb.tsx', lang: 'tsx' },
       { label: 'nebula-scene.tsx', path: 'src/registry/orbe/nebula-orb/nebula-scene.tsx', lang: 'tsx' },
+    ],
+  },
+  {
+    id: 'waveform-ring',
+    name: 'Waveform Ring',
+    tagline: 'A ring whose radius traces the live waveform: time-domain audio drawn in polar coordinates.',
+    tech: 'Canvas',
+    dependencies: [],
+    defaultColorFrom: '#2dd4bf',
+    defaultColorTo: '#38bdf8',
+    defaultSize: 168,
+    files: [
+      { label: 'waveform-ring.tsx', path: 'src/registry/orbe/waveform-ring/waveform-ring.tsx', lang: 'tsx' },
+    ],
+  },
+  {
+    id: 'edge-glow',
+    name: 'Edge Glow',
+    tagline: 'Siri-style ambient frame: a masked conic-gradient glow that wraps your own content instead of sitting in the middle.',
+    tech: 'Pure CSS',
+    dependencies: [],
+    defaultColorFrom: '#f472b6',
+    defaultColorTo: '#60a5fa',
+    defaultSize: 168,
+    files: [
+      { label: 'edge-glow.tsx', path: 'src/registry/orbe/edge-glow/edge-glow.tsx', lang: 'tsx' },
+    ],
+  },
+  {
+    id: 'iridescent-flow',
+    name: 'Iridescent Flow',
+    tagline: 'Single-pass fragment shader with flowing iridescent hues. Raw WebGL, zero dependencies.',
+    tech: 'Shader (canvas)',
+    dependencies: [],
+    defaultColorFrom: '#c084fc',
+    defaultColorTo: '#67e8f9',
+    defaultSize: 168,
+    files: [
+      { label: 'iridescent-flow.tsx', path: 'src/registry/orbe/iridescent-flow/iridescent-flow.tsx', lang: 'tsx' },
+    ],
+  },
+  {
+    id: 'liquid-metal',
+    name: 'Liquid Metal',
+    tagline: 'Raymarched metaballs with a molten chrome finish. Raw WebGL, zero dependencies.',
+    tech: 'Shader (canvas)',
+    dependencies: [],
+    defaultColorFrom: '#94a3b8',
+    defaultColorTo: '#e2e8f0',
+    defaultSize: 168,
+    files: [
+      { label: 'liquid-metal.tsx', path: 'src/registry/orbe/liquid-metal/liquid-metal.tsx', lang: 'tsx' },
     ],
   },
 ];

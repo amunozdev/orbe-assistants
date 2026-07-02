@@ -42,7 +42,7 @@ export const OrbCard = ({ orb }: { orb: OrbCardData }) => {
   const [colorTo, setColorTo] = useState(orb.defaultColorTo);
   const [showCode, setShowCode] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
-  const levelRef = useAudioLevel(mic);
+  const { levelRef } = useAudioLevel(mic);
 
   const reactive = state === 'listening' || state === 'speaking';
 
