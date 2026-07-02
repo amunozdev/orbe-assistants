@@ -24,6 +24,7 @@ import { SegmentedControl } from './segmented-control';
 import { SPEED_PRESETS, sizePresetsForOrb } from './control-presets';
 import { InstallBlock } from './install-block';
 import { OpenInStackblitz } from './open-in-stackblitz';
+import { PlayIcon, PauseIcon, MicIcon, MicOffIcon, SoundIcon, SoundOffIcon } from './orb-icons';
 import { useDemoCycle } from './use-demo-cycle';
 
 export interface OrbCardData {
@@ -106,7 +107,7 @@ const stateButton = (s: OrbState, state: OrbState, setState: (next: OrbState) =>
 
 const transportChip = (active: boolean) =>
   clsx(
-    'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+    'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
     active
       ? 'border-accent bg-accent/15 text-accent-foreground'
       : 'border-border bg-panel text-muted hover:text-foreground',
@@ -243,7 +244,8 @@ ${usageFile.code}\`\`\``,
             title="Simulate a voice conversation: cycles idle, connecting, listening, thinking and speaking. Click any state or the mic to interrupt."
             className={transportChip(demo.running)}
           >
-            {demo.running ? '■ Demo' : '▶ Demo'}
+            {demo.running ? <PauseIcon /> : <PlayIcon />}
+            Demo
           </button>
           <button
             type="button"
@@ -258,11 +260,26 @@ ${usageFile.code}\`\`\``,
             className={clsx(
               'disabled:cursor-not-allowed disabled:opacity-50',
               micError
-                ? 'rounded-md border border-foreground/40 bg-panel px-2.5 py-1 text-xs font-medium text-foreground transition-colors'
+                ? 'inline-flex items-center gap-1.5 rounded-md border border-foreground/40 bg-panel px-2.5 py-1 text-xs font-medium text-foreground transition-colors'
                 : transportChip(mic),
             )}
           >
-            {micError ? MIC_ERROR_LABEL[micError] : mic ? '● Mic on' : 'Mic off'}
+            {micError ? (
+              <>
+                <MicOffIcon />
+                {MIC_ERROR_LABEL[micError]}
+              </>
+            ) : mic ? (
+              <>
+                <MicIcon />
+                Mic on
+              </>
+            ) : (
+              <>
+                <MicOffIcon />
+                Mic off
+              </>
+            )}
           </button>
           <button
             type="button"
@@ -271,7 +288,8 @@ ${usageFile.code}\`\`\``,
             title="Play subtle sound cues (and haptics on supported devices) on state changes"
             className={transportChip(cues)}
           >
-            {cues ? '● Cues on' : 'Cues off'}
+            {cues ? <SoundIcon /> : <SoundOffIcon />}
+            {cues ? 'Cues on' : 'Cues off'}
           </button>
           <OrbStatus state={state} className="ml-auto text-[11px] text-muted" />
         </div>
