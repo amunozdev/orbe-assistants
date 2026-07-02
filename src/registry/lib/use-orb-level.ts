@@ -1,14 +1,17 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { RefObject } from 'react';
-import { stateEnergy, type OrbState } from './orb-state';
+import { approach, stateEnergy, type OrbState } from './orb-state';
 
 export const useOrbLevel = (
   ref: RefObject<HTMLElement | null>,
   state: OrbState,
   levelRef?: RefObject<number>,
 ) => {
+  const smoothedRef = useRef(0);
+  const clockRef = useRef(0);
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -19,17 +22,17 @@ export const useOrbLevel = (
     }
 
     let raf = 0;
-    let start: number | null = null;
-    let smoothed = 0;
+    let last: number | null = null;
 
     const frame = (now: number) => {
-      if (start === null) start = now;
-      const t = (now - start) / 1000;
+      const dt = last === null ? 0 : Math.min((now - last) / 1000, 0.1);
+      last = now;
+      clockRef.current += dt;
       const live = levelRef?.current;
       const hasLive = typeof live === 'number' && live >= 0;
-      const target = hasLive ? live : stateEnergy(state, t);
-      smoothed += (target - smoothed) * 0.12;
-      el.style.setProperty('--orb-level', smoothed.toFixed(3));
+      const target = hasLive ? live : stateEnergy(state, clockRef.current);
+      smoothedRef.current = approach(smoothedRef.current, target, 7.7, dt);
+      el.style.setProperty('--orb-level', smoothedRef.current.toFixed(3));
       raf = requestAnimationFrame(frame);
     };
 

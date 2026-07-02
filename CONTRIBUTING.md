@@ -1,6 +1,6 @@
 # Contributing to Orbe Assistants
 
-Thanks for your interest in contributing! Orbe Assistants is an open-source, copy-paste gallery of animated orbs for conversational AI assistants. Contributions of all sizes are welcome — new orbs, bug fixes, docs, and accessibility improvements.
+Thanks for your interest in contributing! Orbe Assistants is an open-source, copy-paste gallery of animated orbs for conversational AI assistants. Contributions of all sizes are welcome: new orbs, bug fixes, docs, and accessibility improvements.
 
 > Code, commit messages, and pull requests are written in **English**.
 
@@ -40,14 +40,14 @@ pnpm build   # Production build
 
 - **TypeScript strict** mode everywhere.
 - **Named exports** only (no default exports outside Next.js pages/config).
-- `const` arrow functions for components; Server Components by default — add `"use client"` only when necessary.
+- `const` arrow functions for components; Server Components by default, add `"use client"` only when necessary.
 - **kebab-case** file names; `import type` for type-only imports.
 - Use the design tokens (`text-foreground`, `text-muted`, `border-border`, `text-accent-foreground`) and make sure UI works in **both dark and light themes**.
 - Keep `pnpm lint` and `pnpm build` passing before you push.
 
 ## Issues
 
-New here? Look for issues labeled **`good first issue`** — they are scoped to be approachable. Feel free to open an issue first to discuss larger changes before writing code.
+New here? Look for issues labeled **`good first issue`**; they are scoped to be approachable. Feel free to open an issue first to discuss larger changes before writing code.
 
 ## Environment variables
 

@@ -40,7 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# AI tools / assistants — keep out of this public repo
+# AI tools / assistants: keep out of this public repo
 CLAUDE.md
 AGENTS.md
 .claude/

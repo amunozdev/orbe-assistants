@@ -44,8 +44,8 @@ const Page = async () => {
           Animated orbs for AI Assistants
         </h1>
         <p className="mt-4 text-pretty text-base text-muted">
-          A gallery of orbs with shared states —{' '}
-          <span className="text-foreground">idle · connecting · listening · thinking · speaking</span> — ready to
+          A gallery of orbs with shared states:{' '}
+          <span className="text-foreground">idle · connecting · listening · thinking · speaking</span>, ready to
           copy. Toggle states, try the mic reactivity and customize color, speed and size.
         </p>
       </header>

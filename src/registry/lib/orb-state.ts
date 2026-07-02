@@ -45,6 +45,44 @@ export const stateEnergy = (state: OrbState, t: number): number => {
   }
 };
 
+export const approach = (current: number, target: number, rate: number, dt: number): number =>
+  current + (target - current) * (1 - Math.exp(-rate * dt));
+
+export type StateWeights = Record<OrbState, number>;
+
+export interface StateMix {
+  weights: StateWeights;
+  update: (state: OrbState, dt: number, rate?: number) => StateWeights;
+}
+
+export const createStateMix = (initial: OrbState = 'idle'): StateMix => {
+  const weights: StateWeights = {
+    idle: 0,
+    connecting: 0,
+    listening: 0,
+    thinking: 0,
+    speaking: 0,
+    error: 0,
+    disabled: 0,
+  };
+  weights[initial] = 1;
+  const keys = Object.keys(weights) as OrbState[];
+  const update = (state: OrbState, dt: number, rate = 6): StateWeights => {
+    let total = 0;
+    for (const key of keys) {
+      const target = key === state ? 1 : 0;
+      const next = approach(weights[key], target, rate, dt);
+      weights[key] = target === 0 && next < 0.001 ? 0 : next;
+      total += weights[key];
+    }
+    if (total > 0) {
+      for (const key of keys) weights[key] /= total;
+    }
+    return weights;
+  };
+  return { weights, update };
+};
+
 export const orbVars = ({
   size,
   speed,

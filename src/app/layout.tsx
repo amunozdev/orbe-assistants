@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Orbe Assistants — Animated orbs for AI assistants",
+  title: "Orbe Assistants | Animated orbs for AI assistants",
   description: "Open-source copy-paste gallery of animated orbs for conversational AI assistants.",
 };
 
@@ -42,7 +42,7 @@ export default function RootLayout({
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
-          enableSystem
+          enableSystem={false}
           disableTransitionOnChange
         >
           <Header />
