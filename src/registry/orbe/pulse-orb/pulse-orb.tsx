@@ -17,6 +17,7 @@ export const PulseOrb = ({
 }: OrbProps) => {
   const ref = useRef<HTMLDivElement>(null);
   useOrbLevel(ref, state, levelRef);
+  const isError = state === 'error';
 
   return (
     <div
@@ -25,7 +26,12 @@ export const PulseOrb = ({
       aria-label={label}
       data-state={state}
       className={[styles.orb, className].filter(Boolean).join(' ')}
-      style={orbVars({ size, speed, colorFrom, colorTo })}
+      style={orbVars({
+        size,
+        speed,
+        colorFrom: isError ? '#fb7185' : colorFrom,
+        colorTo: isError ? '#f43f5e' : colorTo,
+      })}
     >
       <span className={styles.glow} />
       <span className={`${styles.ring} ${styles.ring1}`} />

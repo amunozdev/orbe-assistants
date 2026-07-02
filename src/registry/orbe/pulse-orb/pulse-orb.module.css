@@ -4,6 +4,10 @@
   --orb-color-from: #818cf8;
   --orb-color-to: #22d3ee;
   --orb-level: 0;
+  --orb-ring-alpha: 1;
+  --orb-ring-time: 1;
+  --orb-ring-dir: normal;
+  --orb-glow-alpha: 1;
   position: relative;
   display: grid;
   place-items: center;
@@ -12,68 +16,22 @@
   isolation: isolate;
 }
 
-.glow {
-  position: absolute;
-  width: 70%;
-  height: 70%;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--orb-color-from), transparent 65%);
-  opacity: calc(0.35 + 0.5 * var(--orb-level));
-  filter: blur(calc(8px + 22px * var(--orb-level)));
-  transition: opacity 0.1s linear;
+.orb[data-state='idle'] {
+  --orb-ring-alpha: 0.45;
+  --orb-ring-time: 1.85;
 }
 
-.core {
-  position: absolute;
-  width: 38%;
-  height: 38%;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--orb-color-from), var(--orb-color-to));
-  box-shadow: 0 0 calc(16px + 40px * var(--orb-level))
-    color-mix(in oklab, var(--orb-color-from), transparent 45%);
-  transform: scale(calc(1 + 0.2 * var(--orb-level)));
-  transition: transform 0.08s linear;
+.orb[data-state='listening'] {
+  --orb-ring-time: 0.9;
+  --orb-ring-dir: reverse;
 }
 
-.ring {
-  position: absolute;
-  width: 42%;
-  height: 42%;
-  border-radius: 50%;
-  border: 2px solid color-mix(in oklab, var(--orb-color-to), transparent 25%);
-  opacity: 0;
-  animation: orb-ring calc(3s / var(--orb-speed)) ease-out infinite;
+.orb[data-state='speaking'] {
+  --orb-ring-time: 0.667;
 }
 
-.ring2 {
-  animation-delay: calc(-1s / var(--orb-speed));
-}
-
-.ring3 {
-  animation-delay: calc(-2s / var(--orb-speed));
-}
-
-.arc {
-  position: absolute;
-  width: 54%;
-  height: 54%;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  border-top-color: var(--orb-color-to);
-  border-right-color: color-mix(in oklab, var(--orb-color-from), transparent 40%);
-  opacity: 0;
-  animation: orb-spin calc(1.6s / var(--orb-speed)) linear infinite;
-}
-
-.orb[data-state='connecting'] .arc,
-.orb[data-state='thinking'] .arc {
-  opacity: 1;
-}
-
-.orb[data-state='connecting'] .ring,
-.orb[data-state='disabled'] .ring {
-  opacity: 0;
-  animation: none;
+.orb[data-state='connecting'] {
+  --orb-glow-alpha: 0.6;
 }
 
 .orb[data-state='error'] {
@@ -82,34 +40,265 @@
 }
 
 .orb[data-state='disabled'] {
+  --orb-glow-alpha: 0.4;
   filter: grayscale(0.8);
   opacity: 0.5;
 }
 
-@keyframes orb-ring {
+.glow {
+  position: absolute;
+  width: 82%;
+  height: 82%;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      48% 48% at 36% 32%,
+      color-mix(in oklab, var(--orb-color-from), transparent 22%),
+      transparent 70%
+    ),
+    radial-gradient(
+      52% 52% at 66% 70%,
+      color-mix(in oklab, var(--orb-color-to), transparent 28%),
+      transparent 72%
+    );
+  background:
+    radial-gradient(
+      48% 48% at 36% 32%,
+      light-dark(
+        color-mix(in oklab, var(--orb-color-from), transparent 10%),
+        color-mix(in oklab, var(--orb-color-from), transparent 30%)
+      ),
+      transparent 70%
+    ),
+    radial-gradient(
+      52% 52% at 66% 70%,
+      light-dark(
+        color-mix(in oklab, var(--orb-color-to), transparent 16%),
+        color-mix(in oklab, var(--orb-color-to), transparent 36%)
+      ),
+      transparent 72%
+    );
+  filter: blur(18px);
+  opacity: calc(var(--orb-glow-alpha) * (0.5 + 0.5 * var(--orb-level)));
+  transform: scale(calc(0.95 + 0.22 * var(--orb-level)));
+  will-change: transform, opacity;
+}
+
+.core {
+  position: absolute;
+  width: 42%;
+  height: 42%;
+  border-radius: 50%;
+  background: radial-gradient(
+    120% 120% at 32% 28% in oklab,
+    color-mix(in oklab, var(--orb-color-from), white 60%) 0%,
+    var(--orb-color-from) 30%,
+    var(--orb-color-to) 78%,
+    color-mix(in oklab, var(--orb-color-to), black 35%) 100%
+  );
+  box-shadow:
+    inset -6px -10px 18px color-mix(in oklab, var(--orb-color-to), black 60%),
+    inset 3px 5px 10px color-mix(in oklab, white, transparent 60%),
+    0 10px 26px -10px color-mix(in oklab, var(--orb-color-to), transparent 55%);
+  transform: scale(calc(1 + 0.14 * var(--orb-level)));
+  will-change: transform;
+}
+
+.core::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: 16%;
+  width: 40%;
+  height: 26%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 255 255 / 0.9), transparent);
+  filter: blur(1px);
+  transform: rotate(-20deg);
+}
+
+.core::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+  opacity: 0.1;
+}
+
+.orb[data-state='idle'] .core {
+  animation: breathe calc(4s / var(--orb-speed)) ease-in-out infinite;
+}
+
+.orb[data-state='thinking'] .core {
+  animation: breathe calc(3s / var(--orb-speed)) ease-in-out infinite;
+}
+
+.orb[data-state='connecting'] .core {
+  filter: saturate(0.75) brightness(0.98);
+}
+
+.orb[data-state='error'] .core {
+  animation: blink calc(1.8s / var(--orb-speed)) ease-in-out infinite;
+}
+
+.ring {
+  position: absolute;
+  width: 42%;
+  height: 42%;
+  border-radius: 50%;
+  border: 1.5px solid;
+  opacity: 0;
+  animation-name: emit;
+  animation-duration: calc(var(--ring-base) * var(--orb-ring-time) / var(--orb-speed));
+  animation-timing-function: cubic-bezier(0.16, 0.84, 0.44, 1);
+  animation-delay: calc(var(--ring-delay) * var(--orb-ring-time) / var(--orb-speed));
+  animation-iteration-count: infinite;
+  animation-direction: var(--orb-ring-dir);
+}
+
+.ring1 {
+  --ring-base: 2.7s;
+  --ring-delay: 0s;
+  --ring-scale: 2.1;
+  border-color: color-mix(in oklab, var(--orb-color-from) 72%, var(--orb-color-to));
+}
+
+.ring2 {
+  --ring-base: 3.1s;
+  --ring-delay: -1.1s;
+  --ring-scale: 2.3;
+  border-color: color-mix(in oklab, var(--orb-color-from) 40%, var(--orb-color-to));
+}
+
+.ring3 {
+  --ring-base: 3.6s;
+  --ring-delay: -2.3s;
+  --ring-scale: 2.5;
+  border-color: color-mix(in oklab, var(--orb-color-from) 12%, var(--orb-color-to));
+}
+
+.orb[data-state='connecting'] .ring,
+.orb[data-state='thinking'] .ring,
+.orb[data-state='error'] .ring,
+.orb[data-state='disabled'] .ring {
+  animation: none;
+  opacity: 0;
+}
+
+.arc {
+  position: absolute;
+  width: 54%;
+  height: 54%;
+  opacity: 0;
+}
+
+.arc::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg in oklab,
+    transparent 55deg,
+    color-mix(in oklab, var(--orb-color-from), transparent 78%) 140deg,
+    color-mix(in oklab, var(--orb-color-from) 45%, var(--orb-color-to)) 250deg,
+    var(--orb-color-to) 354deg,
+    transparent 355deg
+  );
+  -webkit-mask: radial-gradient(closest-side, transparent 89%, #000 93%, #000 96.5%, transparent 100%);
+  mask: radial-gradient(closest-side, transparent 89%, #000 93%, #000 96.5%, transparent 100%);
+}
+
+.arc::after {
+  content: '';
+  position: absolute;
+  top: 2.75%;
+  left: 50%;
+  width: 6.5%;
+  height: 6.5%;
+  border-radius: 50%;
+  background: var(--orb-color-to);
+  box-shadow: 0 0 6px color-mix(in oklab, var(--orb-color-to), transparent 25%);
+  transform: translate(-50%, -50%);
+}
+
+.orb[data-state='connecting'] .arc,
+.orb[data-state='thinking'] .arc {
+  opacity: 1;
+  animation: spin calc(1.6s / var(--orb-speed)) linear infinite;
+}
+
+.orb[data-state='connecting'] .arc {
+  opacity: 0.75;
+  animation-duration: calc(2.4s / var(--orb-speed));
+}
+
+@keyframes emit {
   0% {
     transform: scale(1);
-    opacity: calc(0.45 + 0.5 * var(--orb-level));
+    opacity: 0;
+  }
+  14% {
+    opacity: calc(var(--orb-ring-alpha) * (0.4 + 0.5 * var(--orb-level)));
   }
   100% {
-    transform: scale(2.3);
+    transform: scale(var(--ring-scale));
     opacity: 0;
   }
 }
 
-@keyframes orb-spin {
+@keyframes spin {
   to {
     transform: rotate(360deg);
   }
 }
 
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes blink {
+  0%,
+  26%,
+  100% {
+    opacity: 1;
+  }
+  7%,
+  20% {
+    opacity: 0.35;
+  }
+  13% {
+    opacity: 0.9;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .ring,
-  .arc {
+  .orb[data-state] .core,
+  .orb[data-state] .ring,
+  .orb[data-state] .arc {
     animation: none;
   }
-  .orb[data-state='connecting'] .arc,
-  .orb[data-state='thinking'] .arc {
+  .orb:is([data-state='idle'], [data-state='listening'], [data-state='speaking']) .ring1 {
+    transform: scale(1.2);
+    opacity: 0.3;
+  }
+  .orb:is([data-state='idle'], [data-state='listening'], [data-state='speaking']) .ring2 {
+    transform: scale(1.5);
+    opacity: 0.2;
+  }
+  .orb:is([data-state='idle'], [data-state='listening'], [data-state='speaking']) .ring3 {
+    transform: scale(1.8);
+    opacity: 0.1;
+  }
+  .orb:is([data-state='connecting'], [data-state='thinking']) .arc {
     opacity: 0.6;
   }
 }
