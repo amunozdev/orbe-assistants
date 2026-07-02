@@ -1,5 +1,5 @@
-const REPO_URL = 'https://github.com/amunozdev/voiceorb';
-const API_URL = 'https://api.github.com/repos/amunozdev/voiceorb';
+const REPO_URL = 'https://github.com/amunozdev/voiceorbs';
+const API_URL = 'https://api.github.com/repos/amunozdev/voiceorbs';
 
 const StarIcon = () => (
   <svg

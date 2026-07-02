@@ -1,6 +1,6 @@
 # Voice assistant example
 
-A minimal, standalone Vite + React 19 app showing how an VoiceOrb orb plugs into a real voice assistant lifecycle: connect, listen to the microphone, detect silence, "think", "speak", and handle a denied microphone.
+A minimal, standalone Vite + React 19 app showing how a VoiceOrbs orb plugs into a real voice assistant lifecycle: connect, listen to the microphone, detect silence, "think", "speak", and handle a denied microphone.
 
 ## Run it
 

@@ -1,9 +1,9 @@
 import { GitHubStars } from '@/components/github-stars';
 
-const REPO_URL = 'https://github.com/amunozdev/voiceorb';
-const CONTRIBUTE_URL = 'https://github.com/amunozdev/voiceorb/blob/main/CONTRIBUTING.md';
+const REPO_URL = 'https://github.com/amunozdev/voiceorbs';
+const CONTRIBUTE_URL = 'https://github.com/amunozdev/voiceorbs/blob/main/CONTRIBUTING.md';
 const GOOD_FIRST_ISSUE_URL =
-  'https://github.com/amunozdev/voiceorb/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22';
+  'https://github.com/amunozdev/voiceorbs/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22';
 const X_URL = 'https://x.com/alexmunoz1_';
 
 const LINK_CLASS = 'text-muted transition-colors hover:text-foreground';
@@ -32,7 +32,7 @@ export const Footer = () => (
             className="inline-flex items-center gap-2 text-sm font-medium text-foreground transition-colors hover:text-accent-foreground"
           >
             <GitHubIcon />
-            amunozdev/voiceorb
+            amunozdev/voiceorbs
           </a>
           <GitHubStars />
         </div>

@@ -1,6 +1,6 @@
-# Contributing to VoiceOrb
+# Contributing to VoiceOrbs
 
-Thanks for your interest in contributing! VoiceOrb is an open-source, copy-paste gallery of animated orbs for conversational AI assistants. Contributions of all sizes are welcome: new orbs, bug fixes, docs, and accessibility improvements.
+Thanks for your interest in contributing! VoiceOrbs is an open-source, copy-paste gallery of animated orbs for conversational AI assistants. Contributions of all sizes are welcome: new orbs, bug fixes, docs, and accessibility improvements.
 
 > Code, commit messages, and pull requests are written in **English**.
 

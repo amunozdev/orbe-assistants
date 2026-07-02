@@ -13,7 +13,7 @@ export const Header = () => (
           aria-hidden
           className="size-5 shrink-0 rounded-full bg-[linear-gradient(135deg,var(--color-accent),var(--color-accent-foreground))]"
         />
-        <span className="truncate">VoiceOrb</span>
+        <span className="truncate">VoiceOrbs</span>
       </Link>
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
         <Link

@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 const siteUrl = "https://voiceorbs.vercel.app";
-const siteName = "VoiceOrb";
-const siteTitle = "VoiceOrb | Animated orbs for AI assistants";
+const siteName = "VoiceOrbs";
+const siteTitle = "VoiceOrbs | Animated orbs for AI assistants";
 const siteDescription =
   "Open-source copy-paste gallery of animated orbs for conversational AI assistants.";
 
@@ -54,7 +54,7 @@ const jsonLd = {
       name: siteName,
       url: siteUrl,
       description: siteDescription,
-      codeRepository: "https://github.com/amunozdev/voiceorb",
+      codeRepository: "https://github.com/amunozdev/voiceorbs",
       license: "https://opensource.org/licenses/MIT",
       programmingLanguage: "TypeScript",
     },

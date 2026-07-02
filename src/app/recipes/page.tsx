@@ -4,9 +4,9 @@ import { RecipeCard } from './recipe-card';
 import { recipes } from './recipes';
 
 export const metadata: Metadata = {
-  title: 'Recipes | VoiceOrb',
+  title: 'Recipes | VoiceOrbs',
   description:
-    'Integration recipes for wiring VoiceOrb orbs to real voice stacks: plain microphone, Vapi, ElevenLabs Agents, LiveKit Agents and OpenAI Realtime.',
+    'Integration recipes for wiring VoiceOrbs orbs to real voice stacks: plain microphone, Vapi, ElevenLabs Agents, LiveKit Agents and OpenAI Realtime.',
 };
 
 const RecipesPage = () => (

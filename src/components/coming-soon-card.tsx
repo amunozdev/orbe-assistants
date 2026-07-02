@@ -1,4 +1,4 @@
-const REPO_URL = 'https://github.com/amunozdev/voiceorb';
+const REPO_URL = 'https://github.com/amunozdev/voiceorbs';
 
 const PlusIcon = () => (
   <svg

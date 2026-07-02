@@ -4,7 +4,7 @@ import { ORB_STATES } from '@/registry/lib/orb-state';
 export const dynamic = 'force-static';
 
 const SITE_URL = 'https://voiceorbs.vercel.app';
-const REPO_URL = 'https://github.com/amunozdev/voiceorb';
+const REPO_URL = 'https://github.com/amunozdev/voiceorbs';
 
 export const GET = (): Response => {
   const coreStates = ORB_STATES.join(', ');
@@ -15,11 +15,11 @@ export const GET = (): Response => {
     .map((orb) => `- [${orb.name}](${SITE_URL}/orbs/${orb.id}): ${orb.tech}. ${orb.tagline}`)
     .join('\n');
 
-  const body = `# VoiceOrb
+  const body = `# VoiceOrbs
 
 > Animated, audio-reactive orbs for AI voice assistants: ${orbs.length} copy-paste React components sharing one small props contract, distributed as source code and AI prompts instead of an npm package.
 
-VoiceOrb is a gallery of animated orb components for React / Next.js voice interfaces. Every orb is a client component that visualizes the assistant lifecycle through a \`state\` prop and reacts to live audio through a \`levelRef\` without re-renders. Integration is copy-paste: grab the component files plus a small shared lib from the site or the repo, or copy a ready-made AI prompt (with provider wiring for Vapi, ElevenLabs, LiveKit and OpenAI Realtime) and let a coding agent do it.
+VoiceOrbs is a gallery of animated orb components for React / Next.js voice interfaces. Every orb is a client component that visualizes the assistant lifecycle through a \`state\` prop and reacts to live audio through a \`levelRef\` without re-renders. Integration is copy-paste: grab the component files plus a small shared lib from the site or the repo, or copy a ready-made AI prompt (with provider wiring for Vapi, ElevenLabs, LiveKit and OpenAI Realtime) and let a coding agent do it.
 
 ## Props contract
 

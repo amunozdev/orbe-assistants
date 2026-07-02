@@ -1,15 +1,15 @@
-# VoiceOrb
+# VoiceOrbs
 
 Copy-paste animated orbs for AI voice assistants. 15 audio-reactive React components sharing one 7-state contract: browse the gallery, copy the code or an AI prompt, wire it to your provider.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/Live_Demo-voiceorbs.vercel.app-8b5cf6)](https://voiceorbs.vercel.app)
-[![GitHub stars](https://img.shields.io/github/stars/amunozdev/voiceorb?style=social)](https://github.com/amunozdev/voiceorb)
+[![GitHub stars](https://img.shields.io/github/stars/amunozdev/voiceorbs?style=social)](https://github.com/amunozdev/voiceorbs)
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/hero-light.png">
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/hero-dark.png">
-  <img src="docs/assets/hero-dark.png" alt="VoiceOrb gallery: animated orbs for AI assistants with shared states, live mic reactivity and customization" width="1200">
+  <img src="docs/assets/hero-dark.png" alt="VoiceOrbs gallery: animated orbs for AI assistants with shared states, live mic reactivity and customization" width="1200">
 </picture>
 
 ## The orbs
@@ -89,7 +89,3 @@ PRs welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to add an orb, run t
 ## License
 
 [MIT](LICENSE)
-
-## Star history
-
-[![Star History Chart](https://api.star-history.com/svg?repos=amunozdev/voiceorb&type=Date)](https://star-history.com/#amunozdev/voiceorb&Date)

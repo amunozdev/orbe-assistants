@@ -3,14 +3,14 @@ import { orbs } from '@/registry/registry';
 
 export const generateStaticParams = () => orbs.map(({ id }) => ({ id }));
 
-export const alt = 'Animated AI-assistant orb from the VoiceOrb gallery';
+export const alt = 'Animated AI-assistant orb from the VoiceOrbs gallery';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const orb = orbs.find((o) => o.id === id);
-  const name = orb?.name ?? 'VoiceOrb';
+  const name = orb?.name ?? 'VoiceOrbs';
   const tagline =
     orb?.tagline ?? 'Open-source copy-paste gallery of animated orbs for AI assistants.';
   const from = orb?.defaultColorFrom ?? '#818cf8';
@@ -59,7 +59,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
               textTransform: 'uppercase',
             }}
           >
-            VoiceOrb
+            VoiceOrbs
           </div>
           <div
             style={{
