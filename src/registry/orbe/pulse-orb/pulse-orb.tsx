@@ -17,7 +17,7 @@ export const PulseOrb = ({
 }: OrbProps) => {
   const ref = useRef<HTMLDivElement>(null);
   useOrbLevel(ref, state, levelRef);
-  const isError = state === 'error';
+  const ringSets = [styles.ringSetIdle, styles.ringSetListen, styles.ringSetSpeak];
 
   return (
     <div
@@ -26,19 +26,24 @@ export const PulseOrb = ({
       aria-label={label}
       data-state={state}
       className={[styles.orb, className].filter(Boolean).join(' ')}
-      style={orbVars({
-        size,
-        speed,
-        colorFrom: isError ? '#fb7185' : colorFrom,
-        colorTo: isError ? '#f43f5e' : colorTo,
-      })}
+      style={orbVars({ size, speed, colorFrom, colorTo })}
     >
       <span className={styles.glow} />
-      <span className={`${styles.ring} ${styles.ring1}`} />
-      <span className={`${styles.ring} ${styles.ring2}`} />
-      <span className={`${styles.ring} ${styles.ring3}`} />
-      <span className={styles.arc} />
-      <span className={styles.core} />
+      {ringSets.map((set) => (
+        <span key={set} className={`${styles.ringSet} ${set}`}>
+          <span className={`${styles.ring} ${styles.ring1}`} />
+          <span className={`${styles.ring} ${styles.ring2}`} />
+          <span className={`${styles.ring} ${styles.ring3}`} />
+        </span>
+      ))}
+      <span className={styles.arc}>
+        <span className={styles.arcSpin}>
+          <span className={styles.arcTurbo} />
+        </span>
+      </span>
+      <span className={styles.coreShell}>
+        <span className={styles.core} />
+      </span>
     </div>
   );
 };
