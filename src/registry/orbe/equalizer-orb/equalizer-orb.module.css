@@ -34,6 +34,9 @@
   --orb-color-from: #38bdf8;
   --orb-color-to: #818cf8;
   --orb-level: 0;
+  --orb-bass: 0;
+  --orb-mid: 0;
+  --orb-treble: 0;
   --eq-from: var(--orb-color-from);
   --eq-to: var(--orb-color-to);
   --eq-ring: 0;
@@ -272,11 +275,11 @@
 
 .bar {
   --eq-dot: calc(var(--orb-size) * (0.013 + 0.006 * var(--bar-gain)));
-  --eq-lo: calc((7% + 7% * var(--orb-level)) * var(--bar-gain));
-  --eq-mid: calc((14% + 18% * var(--orb-level)) * var(--bar-gain));
-  --eq-mh: calc((17% + 24% * var(--orb-level)) * var(--bar-gain));
-  --eq-hi: calc((20% + 30% * var(--orb-level)) * var(--bar-gain));
-  --eq-cn: calc((13% + 22% * var(--orb-level)) * (0.7 + 0.3 * var(--bar-gain)));
+  --eq-lo: calc((7% + 9% * var(--bar-level)) * var(--bar-gain));
+  --eq-mid: calc((14% + 22% * var(--bar-level)) * var(--bar-gain));
+  --eq-mh: calc((17% + 28% * var(--bar-level)) * var(--bar-gain));
+  --eq-hi: calc((20% + 34% * var(--bar-level)) * var(--bar-gain));
+  --eq-cn: calc((13% + 24% * var(--bar-level)) * (0.7 + 0.3 * var(--bar-gain)));
   width: 8%;
   height: var(--bar-h);
   border-radius: 999px;
@@ -290,6 +293,7 @@
 }
 
 .bar1 {
+  --bar-level: var(--orb-treble);
   --bar-h: 48%;
   --bar-gain: 0.55;
   --bar-hue: -5deg;
@@ -300,6 +304,7 @@
 }
 
 .bar2 {
+  --bar-level: calc(0.55 * var(--orb-mid) + 0.45 * var(--orb-treble));
   --bar-h: 66%;
   --bar-gain: 0.7;
   --bar-hue: -3deg;
@@ -310,6 +315,7 @@
 }
 
 .bar3 {
+  --bar-level: calc(0.8 * var(--orb-mid) + 0.2 * var(--orb-bass));
   --bar-h: 86%;
   --bar-gain: 0.9;
   --bar-hue: -1deg;
@@ -320,6 +326,7 @@
 }
 
 .bar4 {
+  --bar-level: calc(0.75 * var(--orb-bass) + 0.25 * var(--orb-mid));
   --bar-h: 100%;
   --bar-gain: 1;
   --bar-hue: 0deg;
@@ -330,6 +337,7 @@
 }
 
 .bar5 {
+  --bar-level: calc(0.85 * var(--orb-mid) + 0.15 * var(--orb-bass));
   --bar-h: 84%;
   --bar-gain: 0.88;
   --bar-hue: 1deg;
@@ -340,6 +348,7 @@
 }
 
 .bar6 {
+  --bar-level: calc(0.5 * var(--orb-mid) + 0.5 * var(--orb-treble));
   --bar-h: 64%;
   --bar-gain: 0.72;
   --bar-hue: 3deg;
@@ -350,6 +359,7 @@
 }
 
 .bar7 {
+  --bar-level: calc(0.9 * var(--orb-treble) + 0.1 * var(--orb-mid));
   --bar-h: 50%;
   --bar-gain: 0.55;
   --bar-hue: 5deg;
@@ -562,10 +572,10 @@
 @keyframes eq-y {
   0%,
   100% {
-    transform: scaleY(calc((0.12 + 0.12 * var(--orb-level)) * var(--bar-gain)));
+    transform: scaleY(calc((0.12 + 0.14 * var(--bar-level)) * var(--bar-gain)));
   }
   50% {
-    transform: scaleY(calc((0.4 + 0.6 * var(--orb-level)) * var(--bar-gain)));
+    transform: scaleY(calc((0.4 + 0.66 * var(--bar-level)) * var(--bar-gain)));
   }
 }
 
@@ -576,7 +586,7 @@
     transform: scaleY(0.12);
   }
   12% {
-    transform: scaleY(calc(0.3 + 0.3 * var(--orb-level)));
+    transform: scaleY(calc(0.3 + 0.34 * var(--bar-level)));
   }
 }
 
