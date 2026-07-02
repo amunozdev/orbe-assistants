@@ -15,6 +15,14 @@ const BAR_CLASSES = [
   styles.bar7,
 ];
 
+const LAYER_CLASSES = [
+  styles.layerIdle,
+  styles.layerActive,
+  styles.layerWave,
+  styles.layerSweep,
+  styles.layerFlat,
+];
+
 export const EqualizerOrb = ({
   state = 'idle',
   size = 168,
@@ -42,8 +50,12 @@ export const EqualizerOrb = ({
         <span className={styles.glowHalo} />
         <span className={styles.glowCore} />
         <span className={styles.bars}>
-          {BAR_CLASSES.map((barClass) => (
-            <span key={barClass} className={`${styles.bar} ${barClass}`} />
+          {LAYER_CLASSES.map((layerClass) => (
+            <span key={layerClass} className={`${styles.layer} ${layerClass}`}>
+              {BAR_CLASSES.map((barClass) => (
+                <span key={barClass} className={`${styles.bar} ${barClass}`} />
+              ))}
+            </span>
           ))}
         </span>
       </span>

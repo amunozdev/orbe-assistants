@@ -1,18 +1,53 @@
+@property --eq-from {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #38bdf8;
+}
+
+@property --eq-to {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #818cf8;
+}
+
+@property --eq-ring {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --eq-breathe {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --eq-shake {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
 .orb {
   --orb-size: 168px;
   --orb-speed: 1;
   --orb-color-from: #38bdf8;
   --orb-color-to: #818cf8;
   --orb-level: 0;
-  --eq-ink: color-mix(in oklab, var(--orb-color-from) 45%, #0f172a);
-  --eq-halo-mix: color-mix(in oklab, var(--orb-color-from), var(--orb-color-to) 60%);
-  --eq-surface-hi: color-mix(in oklab, var(--orb-color-from) 10%, #ffffff);
-  --eq-surface-lo: color-mix(in oklab, var(--orb-color-to) 16%, #e9edf7);
-  --eq-rim: color-mix(in oklab, var(--orb-color-from) 38%, #b9c3d8);
+  --eq-from: var(--orb-color-from);
+  --eq-to: var(--orb-color-to);
+  --eq-ring: 0;
+  --eq-breathe: 0;
+  --eq-shake: 0;
+  --eq-ink: color-mix(in oklab, var(--eq-from) 45%, #0f172a);
+  --eq-halo-mix: color-mix(in oklab, var(--eq-from), var(--eq-to) 60%);
+  --eq-surface-hi: color-mix(in oklab, var(--eq-from) 10%, #ffffff);
+  --eq-surface-lo: color-mix(in oklab, var(--eq-to) 16%, #e9edf7);
+  --eq-rim: color-mix(in oklab, var(--eq-from) 38%, #b9c3d8);
   --eq-sheen: rgb(255 255 255 / 0.65);
   --eq-vignette: color-mix(in oklab, #0f172a, transparent 84%);
   --eq-glow-halo: color-mix(in oklab, var(--eq-halo-mix), transparent 35%);
-  --eq-glow-core: color-mix(in oklab, var(--orb-color-from), transparent 25%);
+  --eq-glow-core: color-mix(in oklab, var(--eq-from), transparent 25%);
   --eq-shadow-tint: color-mix(in oklab, var(--eq-ink), transparent 40%);
   --eq-shadow-tint-active: color-mix(in oklab, var(--eq-ink), transparent 28%);
   --eq-shadow-glow: transparent;
@@ -29,37 +64,45 @@
   width: var(--orb-size);
   height: var(--orb-size);
   isolation: isolate;
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease,
+    --eq-from 0.35s ease,
+    --eq-to 0.35s ease,
+    --eq-ring 0.35s ease,
+    --eq-breathe 0.35s ease,
+    --eq-shake 0.35s ease;
 }
 
 @media (prefers-color-scheme: dark) {
   .orb {
-    --eq-surface-hi: color-mix(in oklab, var(--orb-color-from) 20%, #0b0e17);
-    --eq-surface-lo: color-mix(in oklab, var(--orb-color-to) 11%, #05070d);
-    --eq-rim: color-mix(in oklab, var(--orb-color-from) 42%, #141824);
+    --eq-surface-hi: color-mix(in oklab, var(--eq-from) 20%, #0b0e17);
+    --eq-surface-lo: color-mix(in oklab, var(--eq-to) 11%, #05070d);
+    --eq-rim: color-mix(in oklab, var(--eq-from) 42%, #141824);
     --eq-sheen: rgb(255 255 255 / 0.09);
     --eq-vignette: rgb(0 0 0 / 0.55);
     --eq-glow-halo: var(--eq-halo-mix);
-    --eq-glow-core: var(--orb-color-from);
+    --eq-glow-core: var(--eq-from);
     --eq-shadow-tint: rgb(0 0 0 / 0.6);
     --eq-shadow-tint-active: rgb(0 0 0 / 0.55);
-    --eq-shadow-glow: color-mix(in oklab, var(--orb-color-from), transparent 68%);
-    --eq-shadow-glow-active: color-mix(in oklab, var(--orb-color-from), transparent 55%);
+    --eq-shadow-glow: color-mix(in oklab, var(--eq-from), transparent 68%);
+    --eq-shadow-glow-active: color-mix(in oklab, var(--eq-from), transparent 55%);
   }
 }
 
 @supports (color: light-dark(#fff, #000)) {
   .orb {
     --eq-surface-hi: light-dark(
-      color-mix(in oklab, var(--orb-color-from) 10%, #ffffff),
-      color-mix(in oklab, var(--orb-color-from) 20%, #0b0e17)
+      color-mix(in oklab, var(--eq-from) 10%, #ffffff),
+      color-mix(in oklab, var(--eq-from) 20%, #0b0e17)
     );
     --eq-surface-lo: light-dark(
-      color-mix(in oklab, var(--orb-color-to) 16%, #e9edf7),
-      color-mix(in oklab, var(--orb-color-to) 11%, #05070d)
+      color-mix(in oklab, var(--eq-to) 16%, #e9edf7),
+      color-mix(in oklab, var(--eq-to) 11%, #05070d)
     );
     --eq-rim: light-dark(
-      color-mix(in oklab, var(--orb-color-from) 38%, #b9c3d8),
-      color-mix(in oklab, var(--orb-color-from) 42%, #141824)
+      color-mix(in oklab, var(--eq-from) 38%, #b9c3d8),
+      color-mix(in oklab, var(--eq-from) 42%, #141824)
     );
     --eq-sheen: light-dark(rgb(255 255 255 / 0.65), rgb(255 255 255 / 0.09));
     --eq-vignette: light-dark(color-mix(in oklab, #0f172a, transparent 84%), rgb(0 0 0 / 0.55));
@@ -68,8 +111,8 @@
       var(--eq-halo-mix)
     );
     --eq-glow-core: light-dark(
-      color-mix(in oklab, var(--orb-color-from), transparent 25%),
-      var(--orb-color-from)
+      color-mix(in oklab, var(--eq-from), transparent 25%),
+      var(--eq-from)
     );
     --eq-shadow-tint: light-dark(
       color-mix(in oklab, var(--eq-ink), transparent 40%),
@@ -81,13 +124,32 @@
     );
     --eq-shadow-glow: light-dark(
       transparent,
-      color-mix(in oklab, var(--orb-color-from), transparent 68%)
+      color-mix(in oklab, var(--eq-from), transparent 68%)
     );
     --eq-shadow-glow-active: light-dark(
       transparent,
-      color-mix(in oklab, var(--orb-color-from), transparent 55%)
+      color-mix(in oklab, var(--eq-from), transparent 55%)
     );
   }
+}
+
+.orb[data-state='idle'] {
+  --eq-breathe: 1;
+}
+
+.orb[data-state='listening'] {
+  --eq-ring: 1;
+}
+
+.orb[data-state='error'] {
+  --eq-from: #fb7185;
+  --eq-to: #f43f5e;
+  --eq-shake: 1;
+}
+
+.orb[data-state='disabled'] {
+  opacity: 0.5;
+  filter: grayscale(0.85);
 }
 
 .ring {
@@ -95,14 +157,9 @@
   inset: 0;
   z-index: 0;
   border-radius: 50%;
-  border: 1.5px solid color-mix(in oklab, var(--orb-color-from), var(--orb-color-to) 45%);
-  opacity: 0;
-  transform: scale(0.94);
-}
-
-.orb[data-state='listening'] .ring {
-  opacity: calc(0.18 + 0.6 * var(--orb-level));
-  transform: scale(calc(0.965 + 0.05 * var(--orb-level)));
+  border: 1.5px solid color-mix(in oklab, var(--eq-from), var(--eq-to) 45%);
+  opacity: calc(var(--eq-ring) * (0.18 + 0.6 * var(--orb-level)));
+  transform: scale(calc(0.94 + var(--eq-ring) * (0.025 + 0.05 * var(--orb-level))));
 }
 
 .disc {
@@ -118,6 +175,12 @@
     inset 0 0 0 1px var(--eq-rim),
     var(--eq-shadow);
   transform: scale(calc(1 + 0.02 * var(--orb-level)));
+  transition: box-shadow 0.35s ease;
+  animation: eq-breathe calc(4s / var(--orb-speed)) ease-in-out infinite paused;
+}
+
+.orb[data-state='idle'] .disc {
+  animation-play-state: running;
 }
 
 .disc::before {
@@ -174,13 +237,37 @@
 .bars {
   position: relative;
   z-index: 2;
+  display: grid;
+  width: 68%;
+  height: 58%;
+  -webkit-box-reflect: below 2px linear-gradient(to bottom, transparent 55%, rgb(0 0 0 / 0.3));
+  animation: eq-shake calc(1.8s / var(--orb-speed)) linear infinite paused;
+}
+
+.orb[data-state='error'] .bars {
+  animation-play-state: running;
+}
+
+.layer {
+  grid-area: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6%;
-  width: 68%;
-  height: 58%;
-  -webkit-box-reflect: below 2px linear-gradient(to bottom, transparent 55%, rgb(0 0 0 / 0.3));
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.orb[data-state='idle'] .layerIdle,
+.orb[data-state='disabled'] .layerIdle,
+.orb[data-state='listening'] .layerActive,
+.orb[data-state='speaking'] .layerActive,
+.orb[data-state='thinking'] .layerWave,
+.orb[data-state='connecting'] .layerSweep,
+.orb[data-state='error'] .layerFlat {
+  opacity: 1;
 }
 
 .bar {
@@ -195,9 +282,9 @@
   border-radius: 999px;
   background: linear-gradient(
     to top,
-    var(--orb-color-from),
-    color-mix(in oklab, var(--orb-color-from), var(--orb-color-to) 55%) 55%,
-    color-mix(in oklab, var(--orb-color-to), #fff 30%)
+    var(--eq-from),
+    color-mix(in oklab, var(--eq-from), var(--eq-to) 55%) 55%,
+    color-mix(in oklab, var(--eq-to), #fff 30%)
   );
   filter: hue-rotate(var(--bar-hue));
 }
@@ -272,106 +359,83 @@
   --bar-ease: cubic-bezier(0.45, 0, 0.55, 1);
 }
 
-.orb[data-state='idle'] .disc {
-  animation: eq-breathe calc(4s / var(--orb-speed)) ease-in-out infinite;
-}
-
-.orb[data-state='error'] {
-  --orb-color-from: #fb7185;
-  --orb-color-to: #f43f5e;
-}
-
-.orb[data-state='error'] .bars {
-  animation: eq-shake calc(1.8s / var(--orb-speed)) linear infinite;
-}
-
-.orb[data-state='disabled'] {
-  filter: grayscale(0.85);
-  opacity: 0.5;
-}
-
 @supports (clip-path: inset(10% 0 round 999px)) {
   .bar {
     clip-path: inset(calc(50% - var(--eq-dot)) 0 round 999px);
   }
 
-  .orb[data-state='listening'] .bar,
-  .orb[data-state='speaking'] .bar {
+  .layerFlat .bar {
+    clip-path: inset(calc(50% - var(--orb-size) * 0.012) 0 round 999px);
+  }
+
+  .layerActive .bar {
     animation-duration: calc(var(--bar-dur) / var(--orb-speed));
     animation-delay: calc(var(--bar-delay) / var(--orb-speed));
     animation-timing-function: var(--bar-ease);
     animation-iteration-count: infinite;
+    animation-play-state: paused;
   }
 
-  .orb[data-state='listening'] .bar1,
-  .orb[data-state='speaking'] .bar1 {
+  .layerActive .bar1 {
     animation-name: eq-b;
   }
 
-  .orb[data-state='listening'] .bar2,
-  .orb[data-state='speaking'] .bar2 {
+  .layerActive .bar2 {
     animation-name: eq-a;
   }
 
-  .orb[data-state='listening'] .bar3,
-  .orb[data-state='speaking'] .bar3 {
+  .layerActive .bar3 {
     animation-name: eq-c;
   }
 
-  .orb[data-state='listening'] .bar4,
-  .orb[data-state='speaking'] .bar4 {
+  .layerActive .bar4 {
     animation-name: eq-a;
   }
 
-  .orb[data-state='listening'] .bar5,
-  .orb[data-state='speaking'] .bar5 {
+  .layerActive .bar5 {
     animation-name: eq-b;
   }
 
-  .orb[data-state='listening'] .bar6,
-  .orb[data-state='speaking'] .bar6 {
+  .layerActive .bar6 {
     animation-name: eq-c;
   }
 
-  .orb[data-state='listening'] .bar7,
-  .orb[data-state='speaking'] .bar7 {
+  .layerActive .bar7 {
     animation-name: eq-a;
   }
 
-  .orb[data-state='thinking'] .bar {
+  .layerWave .bar {
     animation: eq-wave calc(2.4s / var(--orb-speed)) cubic-bezier(0.45, 0, 0.55, 1)
-      calc(var(--bar-i) * -0.3s / var(--orb-speed)) infinite;
+      calc(var(--bar-i) * -0.3s / var(--orb-speed)) infinite paused;
   }
 
-  .orb[data-state='connecting'] .bar {
+  .layerSweep .bar {
     animation: eq-connect calc(1.6s / var(--orb-speed)) ease-in-out
-      calc(var(--bar-i) * 0.09s / var(--orb-speed)) infinite both;
+      calc(var(--bar-i) * 0.09s / var(--orb-speed)) infinite both paused;
   }
 
-  .orb[data-state='error'] .bar {
-    clip-path: inset(calc(50% - var(--orb-size) * 0.012) 0 round 999px);
+  .orb[data-state='listening'] .layerActive .bar,
+  .orb[data-state='speaking'] .layerActive .bar,
+  .orb[data-state='thinking'] .layerWave .bar,
+  .orb[data-state='connecting'] .layerSweep .bar {
+    animation-play-state: running;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .orb[data-state] .bar {
+    .orb .layer .bar {
       animation: none;
     }
 
-    .orb[data-state='connecting'] .bar {
+    .orb .layerSweep .bar {
       clip-path: inset(calc(50% - (6% + 9% * var(--bar-gain))) 0 round 999px);
     }
 
-    .orb[data-state='thinking'] .bar {
+    .orb .layerWave .bar {
       clip-path: inset(calc(50% - (9% + 16% * var(--bar-gain))) 0 round 999px);
     }
 
-    .orb[data-state='listening'] .bar,
-    .orb[data-state='speaking'] .bar {
+    .orb .layerActive .bar {
       clip-path: inset(calc(50% - (11% + 27% * var(--bar-gain))) 0 round 999px);
-    }
-
-    .orb[data-state='error'] .bar {
-      clip-path: inset(calc(50% - var(--orb-size) * 0.012) 0 round 999px);
     }
   }
 }
@@ -381,46 +445,47 @@
     transform: scaleY(0.14);
   }
 
-  .orb[data-state='listening'] .bar,
-  .orb[data-state='speaking'] .bar {
-    animation: eq-y calc(var(--bar-dur) / var(--orb-speed)) var(--bar-ease)
-      calc(var(--bar-delay) / var(--orb-speed)) infinite;
-  }
-
-  .orb[data-state='thinking'] .bar {
-    animation: eq-y calc(2.4s / var(--orb-speed)) cubic-bezier(0.45, 0, 0.55, 1)
-      calc(var(--bar-i) * -0.3s / var(--orb-speed)) infinite;
-  }
-
-  .orb[data-state='connecting'] .bar {
-    animation: eq-y-connect calc(1.6s / var(--orb-speed)) ease-in-out
-      calc(var(--bar-i) * 0.09s / var(--orb-speed)) infinite both;
-  }
-
-  .orb[data-state='error'] .bar {
+  .layerFlat .bar {
     transform: scaleY(0.12);
   }
 
+  .layerActive .bar {
+    animation: eq-y calc(var(--bar-dur) / var(--orb-speed)) var(--bar-ease)
+      calc(var(--bar-delay) / var(--orb-speed)) infinite paused;
+  }
+
+  .layerWave .bar {
+    animation: eq-y calc(2.4s / var(--orb-speed)) cubic-bezier(0.45, 0, 0.55, 1)
+      calc(var(--bar-i) * -0.3s / var(--orb-speed)) infinite paused;
+  }
+
+  .layerSweep .bar {
+    animation: eq-y-connect calc(1.6s / var(--orb-speed)) ease-in-out
+      calc(var(--bar-i) * 0.09s / var(--orb-speed)) infinite both paused;
+  }
+
+  .orb[data-state='listening'] .layerActive .bar,
+  .orb[data-state='speaking'] .layerActive .bar,
+  .orb[data-state='thinking'] .layerWave .bar,
+  .orb[data-state='connecting'] .layerSweep .bar {
+    animation-play-state: running;
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .orb[data-state] .bar {
+    .orb .layer .bar {
       animation: none;
     }
 
-    .orb[data-state='connecting'] .bar {
+    .orb .layerSweep .bar {
       transform: scaleY(calc(0.16 + 0.14 * var(--bar-gain)));
     }
 
-    .orb[data-state='thinking'] .bar {
+    .orb .layerWave .bar {
       transform: scaleY(calc(0.2 + 0.26 * var(--bar-gain)));
     }
 
-    .orb[data-state='listening'] .bar,
-    .orb[data-state='speaking'] .bar {
+    .orb .layerActive .bar {
       transform: scaleY(calc(0.24 + 0.5 * var(--bar-gain)));
-    }
-
-    .orb[data-state='error'] .bar {
-      transform: scaleY(0.12);
     }
   }
 }
@@ -518,10 +583,10 @@
 @keyframes eq-breathe {
   0%,
   100% {
-    transform: scale(1);
+    transform: scale(calc(1 + 0.02 * var(--orb-level)));
   }
   50% {
-    transform: scale(1.02);
+    transform: scale(calc(1 + 0.02 * var(--orb-level) + 0.02 * var(--eq-breathe)));
   }
 }
 
@@ -532,16 +597,16 @@
     transform: translateX(0);
   }
   4% {
-    transform: translateX(-1.5px);
+    transform: translateX(calc(-1.5px * var(--eq-shake)));
   }
   9% {
-    transform: translateX(1.5px);
+    transform: translateX(calc(1.5px * var(--eq-shake)));
   }
   14% {
-    transform: translateX(-1px);
+    transform: translateX(calc(-1px * var(--eq-shake)));
   }
   18% {
-    transform: translateX(1px);
+    transform: translateX(calc(1px * var(--eq-shake)));
   }
 }
 
@@ -551,8 +616,8 @@
     animation: none;
   }
 
-  .orb[data-state='listening'] .ring {
-    opacity: 0.55;
-    transform: scale(1);
+  .ring {
+    opacity: calc(var(--eq-ring) * 0.55);
+    transform: scale(calc(0.94 + 0.06 * var(--eq-ring)));
   }
 }
