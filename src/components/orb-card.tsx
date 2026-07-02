@@ -198,40 +198,15 @@ ${usageFile.code}\`\`\``,
     >
       <header className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-3">
-          <h2 className="min-w-0 text-lg font-semibold">
-            {orb.name}
-            <a
-              href={`#${orb.id}`}
-              aria-label={`Link to ${orb.name}`}
-              className="ml-1.5 text-sm font-normal text-muted transition-colors hover:text-accent-foreground"
+          <h2 className="min-w-0 text-lg font-semibold">{orb.name}</h2>
+          {!hideDetailsLink && (
+            <Link
+              href={`/orbs/${orb.id}`}
+              className="shrink-0 rounded-md border border-border bg-panel px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-accent hover:text-accent-foreground"
             >
-              #
-            </a>
-          </h2>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
-            <span
-              title={costHint?.note}
-              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
-            >
-              {orb.tech}
-            </span>
-            {costHint?.label && (
-              <span
-                title={costHint.note}
-                className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
-              >
-                {costHint.label}
-              </span>
-            )}
-            {orb.dependencies.length === 0 && (
-              <span
-                title="No external dependencies; copy the files and it just works."
-                className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
-              >
-                Zero deps
-              </span>
-            )}
-          </div>
+              Details →
+            </Link>
+          )}
         </div>
         <p className="text-sm text-muted">{orb.tagline}</p>
       </header>
@@ -377,14 +352,6 @@ ${usageFile.code}\`\`\``,
             shared={shared}
             config={{ state, size, speed, colorFrom, colorTo }}
           />
-          {!hideDetailsLink && (
-            <Link
-              href={`/orbs/${orb.id}`}
-              className="ml-auto rounded-md border border-border bg-panel px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-accent hover:text-accent-foreground"
-            >
-              Details →
-            </Link>
-          )}
         </div>
         {orb.dependencies.length > 0 && <InstallBlock dependencies={orb.dependencies} />}
         {showPrompt && (
@@ -398,6 +365,30 @@ ${usageFile.code}\`\`\``,
           </div>
         )}
         {showCode && <CodeBlock files={codeFiles} />}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span
+            title={costHint?.note}
+            className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
+          >
+            {orb.tech}
+          </span>
+          {costHint?.label && (
+            <span
+              title={costHint.note}
+              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
+            >
+              {costHint.label}
+            </span>
+          )}
+          {orb.dependencies.length === 0 && (
+            <span
+              title="No external dependencies; copy the files and it just works."
+              className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
+            >
+              Zero deps
+            </span>
+          )}
+        </div>
       </footer>
     </article>
   );
