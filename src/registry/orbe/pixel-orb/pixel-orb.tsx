@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { orbVars, type OrbProps } from '../../lib/orb-state';
+import {
+  approach,
+  createStateMix,
+  orbVars,
+  type OrbProps,
+  type OrbState,
+} from '../../lib/orb-state';
 import { useOrbLevel } from '../../lib/use-orb-level';
 
 const GRID = 23;
@@ -10,6 +16,8 @@ const LIGHT_LEN = Math.hypot(-0.5, -0.65, 0.6);
 const LX = -0.5 / LIGHT_LEN;
 const LY = -0.65 / LIGHT_LEN;
 const LZ = 0.6 / LIGHT_LEN;
+const ERROR_FROM = '#fb7185';
+const ERROR_TO = '#f43f5e';
 
 const BAYER = [
   [0, 8, 2, 10],
@@ -30,6 +38,24 @@ const HASH = (() => {
   }
   return table;
 })();
+
+interface FieldMode {
+  key: OrbState;
+  amp: number;
+  lvlAmp: number;
+  flow: number;
+  wave: number;
+  twist: number;
+}
+
+const FIELD_MODES: readonly FieldMode[] = [
+  { key: 'idle', amp: 0.1, lvlAmp: 0, flow: -1, wave: 1.6, twist: 0 },
+  { key: 'listening', amp: 0.12, lvlAmp: 0.22, flow: 1, wave: 3.2, twist: 0 },
+  { key: 'thinking', amp: 0.16, lvlAmp: 0, flow: -1, wave: 2.2, twist: 2 },
+  { key: 'connecting', amp: 0.05, lvlAmp: 0, flow: -1, wave: 1.8, twist: 0 },
+  { key: 'speaking', amp: 0.12, lvlAmp: 0.28, flow: -1, wave: 3.6, twist: 0 },
+  { key: 'error', amp: 0.07, lvlAmp: 0, flow: -1, wave: 1.2, twist: 0 },
+];
 
 type Rgb = [number, number, number];
 
@@ -106,37 +132,70 @@ export const PixelOrb = ({
     const darkTheme = 0.299 * ink[0] + 0.587 * ink[1] + 0.114 * ink[2] > 128;
 
     let raf = 0;
-    let start: number | null = null;
+    let last: number | null = null;
+    let clock = 0;
     let inView = true;
     let pageVisible = !document.hidden;
-    let rampKey = '';
+    let stepsKey = '';
+    let baseSteps: Rgb[] = [];
+    let lastErrW = -1;
     let ramp: string[] = [];
     let scanRamp: string[] = [];
     const rowOff = new Int8Array(GRID);
 
-    const ensureRamp = (from: string, to: string) => {
-      const key = `${from}|${to}`;
-      if (key === rampKey) return;
-      rampKey = key;
+    const stateMix = createStateMix(stateRef.current);
+    const fieldPhase = new Float64Array(FIELD_MODES.length);
+    const fieldAmp = new Float64Array(FIELD_MODES.length);
+    const fieldPh = new Float64Array(FIELD_MODES.length);
+    const fieldTw = new Float64Array(FIELD_MODES.length);
+    let breathePhase = 0;
+    let wobbleA = 0;
+    let wobbleB = 0;
+    let arcPhase = 0;
+    let twinklePhase = 0;
+    let lvlSmooth = 0;
+
+    const buildSteps = (from: string, to: string): Rgb[] => {
       const a = parseColor(ctx, from);
       const b = parseColor(ctx, to);
       const base = mix(a, b, 0.4);
-      const steps: Rgb[] = [
+      return [
         mix(base, BLACK, darkTheme ? 0.45 : 0.6),
         mix(base, BLACK, 0.35),
         darkTheme ? base : mix(base, BLACK, 0.08),
         mix(a, b, 0.7),
         mix(b, WHITE, 0.55),
       ];
+    };
+
+    const errSteps = buildSteps(ERROR_FROM, ERROR_TO);
+
+    const ensureRamp = (from: string, to: string, errW: number) => {
+      const key = `${from}|${to}`;
+      if (key !== stepsKey) {
+        stepsKey = key;
+        baseSteps = buildSteps(from, to);
+        lastErrW = -1;
+      }
+      if (errW === lastErrW) return;
+      lastErrW = errW;
+      const steps =
+        errW > 0
+          ? baseSteps.map((step, i) => mix(step, errSteps[i], errW))
+          : baseSteps;
       ramp = steps.map((step) => css(step, 1));
       scanRamp = steps.map((step) => css(step, 0.94));
     };
 
-    const render = (elapsed: number) => {
+    const render = (dt: number) => {
       const st = stateRef.current;
-      const spd = st === 'disabled' || reduce ? 0 : speedRef.current;
-      const t = elapsed * spd;
-      const raw =
+      const spdBase = reduce ? 0 : speedRef.current;
+      const weights = stateMix.update(st, reduce ? 1e3 : dt);
+      const wErr = weights.error;
+      const wConn = weights.connecting;
+      const motion = spdBase * (1 - weights.disabled);
+
+      const rawLevel =
         st === 'disabled'
           ? 0
           : Math.min(
@@ -146,52 +205,31 @@ export const PixelOrb = ({
                 Number.parseFloat(host.style.getPropertyValue('--orb-level')) || 0,
               ),
             );
-      const lvl = raw ** 1.4;
-      const err = st === 'error';
-      ensureRamp(
-        err ? '#fb7185' : colorRef.current.from,
-        err ? '#f43f5e' : colorRef.current.to,
-      );
+      lvlSmooth = approach(lvlSmooth, rawLevel, 12, dt);
+      const lvl = lvlSmooth ** 1.4;
 
-      let amp = 0.1;
-      let flow = -1;
-      let twist = 0;
-      let wave = 2.4;
-      let breathe = 1;
-      switch (st) {
-        case 'idle':
-          breathe = 1 + 0.03 * Math.sin(t * 1.3);
-          wave = 1.6;
-          break;
-        case 'listening':
-          flow = 1;
-          amp = 0.12 + 0.22 * lvl;
-          wave = 3.2;
-          break;
-        case 'thinking':
-          twist = 2;
-          amp = 0.16;
-          wave = 2.2;
-          break;
-        case 'connecting':
-          amp = 0.05;
-          wave = 1.8;
-          break;
-        case 'speaking':
-          amp = 0.12 + 0.28 * lvl;
-          wave = 3.6;
-          break;
-        case 'error':
-          amp = 0.07;
-          wave = 1.2;
-          break;
-        case 'disabled':
-          amp = 0;
-          break;
+      ensureRamp(colorRef.current.from, colorRef.current.to, wErr);
+
+      breathePhase += 1.3 * motion * dt;
+      wobbleA += 2.1 * motion * dt;
+      wobbleB += 1.3 * motion * dt;
+      arcPhase += 2 * motion * dt;
+      twinklePhase += 0.2 * motion * dt;
+
+      let fieldCount = 0;
+      for (let i = 0; i < FIELD_MODES.length; i++) {
+        const mode = FIELD_MODES[i];
+        fieldPhase[i] += mode.flow * mode.wave * motion * dt;
+        const wm = weights[mode.key];
+        if (wm === 0) continue;
+        fieldAmp[fieldCount] = (mode.amp + mode.lvlAmp * lvl) * wm;
+        fieldPh[fieldCount] = fieldPhase[i];
+        fieldTw[fieldCount] = mode.twist;
+        fieldCount += 1;
       }
 
-      if (err) {
-        const seed = Math.floor(elapsed * Math.min(2.8, 2.2 * spd));
+      if (wErr > 0) {
+        const seed = Math.floor(clock * Math.min(2.8, 2.2 * spdBase));
         for (let y = 0; y < GRID; y++) {
           const h = hash2(y, seed);
           rowOff[y] = h > 0.82 ? 1 : h < 0.18 ? -1 : 0;
@@ -199,16 +237,16 @@ export const PixelOrb = ({
       }
 
       const c = (GRID - 1) / 2;
+      const breathe = 1 + weights.idle * 0.03 * Math.sin(breathePhase);
       const baseR = GRID * 0.32 * breathe;
       const swell = 1 + 0.2 * lvl;
       const hx = Math.round(c - 0.35 * baseR * swell);
       const hy = Math.round(c - 0.4 * baseR * swell);
-      const arcAng = t * 2;
 
       ctx.clearRect(0, 0, GRID, GRID);
 
       for (let y = 0; y < GRID; y++) {
-        const off = err ? rowOff[y] : 0;
+        const off = wErr > 0 ? rowOff[y] * wErr : 0;
         const row = y & 1 ? scanRamp : ramp;
         for (let x = 0; x < GRID; x++) {
           const dx = x - off - c;
@@ -218,29 +256,29 @@ export const PixelOrb = ({
           const radius =
             baseR *
             (swell +
-              0.12 * lvl * Math.sin(3 * ang + 2.1 * t) +
-              0.05 * Math.sin(5 * ang - 1.3 * t));
+              0.12 * lvl * Math.sin(3 * ang + wobbleA) +
+              0.05 * Math.sin(5 * ang - wobbleB));
           if (dist > radius) continue;
           const q = dist / radius;
           const nx = dx / radius;
           const ny = dy / radius;
           const nz = Math.sqrt(Math.max(0, 1 - nx * nx - ny * ny));
           const lam = Math.max(0, nx * LX + ny * LY + nz * LZ);
-          const s =
-            0.14 +
-            0.78 * lam +
-            amp * Math.sin(dist * 0.95 + flow * t * wave + ang * twist) +
-            (BAYER[y & 3][x & 3] / 16 - 0.5) / 5;
-          let idx = Math.floor(s * 5);
-          if (idx < 0) idx = 0;
-          if (idx > 4) idx = 4;
-          if (q > 0.82 && idx > 1) idx = 1;
-          if (st === 'connecting' && q > 0.6) {
-            const rel = fract((arcAng - ang) / TAU) * TAU;
-            if (rel < 1.7) idx = Math.min(4, idx + (rel < 0.5 ? 2 : 1));
+          let s = 0.14 + 0.78 * lam + (BAYER[y & 3][x & 3] / 16 - 0.5) / 5;
+          for (let f = 0; f < fieldCount; f++) {
+            s += fieldAmp[f] * Math.sin(dist * 0.95 + fieldPh[f] + ang * fieldTw[f]);
           }
+          if (s < 0) s = 0;
+          else if (s > 0.999) s = 0.999;
+          if (q > 0.82 && s > 0.399) s = 0.399;
+          if (wConn > 0 && q > 0.6) {
+            const rel = fract((arcPhase - ang) / TAU) * TAU;
+            if (rel < 1.7) s += (rel < 0.5 ? 0.4 : 0.2) * wConn;
+          }
+          let idx = (s * 5) | 0;
+          if (idx > 4) idx = 4;
           if (x >= hx && x < hx + 2 && y >= hy && y < hy + 2) idx = 4;
-          if (idx < 4 && fract(HASH[y * GRID + x] + 0.2 * t) > 0.97) idx += 1;
+          if (idx < 4 && fract(HASH[y * GRID + x] + twinklePhase) > 0.97) idx += 1;
           ctx.fillStyle = row[idx];
           ctx.fillRect(x, y, 1, 1);
         }
@@ -248,13 +286,19 @@ export const PixelOrb = ({
     };
 
     const active = () =>
-      inView && pageVisible && !reduce && stateRef.current !== 'disabled';
+      inView &&
+      pageVisible &&
+      !reduce &&
+      (stateRef.current !== 'disabled' || stateMix.weights.disabled < 1);
 
     const step = (now: number) => {
       raf = 0;
-      if (start === null) start = now;
-      render((now - start) / 1000);
+      const dt = last === null ? 0 : Math.min((now - last) / 1000, 0.1);
+      last = now;
+      clock += dt;
+      render(dt);
       if (active()) raf = requestAnimationFrame(step);
+      else last = null;
     };
 
     const wake = () => {
@@ -267,6 +311,7 @@ export const PixelOrb = ({
         cancelAnimationFrame(raf);
         raf = 0;
       }
+      last = null;
     };
 
     const io = new IntersectionObserver((entries) => {
