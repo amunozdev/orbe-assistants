@@ -188,8 +188,8 @@ ${usageFile.code}\`\`\``,
       id={orb.id}
       className="flex scroll-mt-20 flex-col gap-5 rounded-2xl border border-border bg-panel/60 p-5"
     >
-      <header className="flex items-start justify-between gap-3">
-        <div>
+      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h2 className="text-lg font-semibold">
             {orb.name}
             <a
@@ -199,18 +199,18 @@ ${usageFile.code}\`\`\``,
             >
               #
             </a>
-            {!hideDetailsLink && (
-              <Link
-                href={`/orbs/${orb.id}`}
-                className="ml-2 text-xs font-normal text-muted underline decoration-border underline-offset-4 transition-colors hover:text-accent-foreground"
-              >
-                Details
-              </Link>
-            )}
           </h2>
           <p className="mt-1 text-sm text-muted">{orb.tagline}</p>
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0 sm:justify-end">
+          {!hideDetailsLink && (
+            <Link
+              href={`/orbs/${orb.id}`}
+              className="rounded-md border border-border bg-panel px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-accent hover:text-accent-foreground"
+            >
+              Details →
+            </Link>
+          )}
           <span
             title={costHint?.note}
             className="rounded-full border border-border px-2.5 py-1 text-[11px] text-muted"
@@ -303,7 +303,7 @@ ${usageFile.code}\`\`\``,
         </button>
       </div>
 
-      <div className="grid grid-cols-2 items-center gap-x-5 gap-y-4 text-xs text-muted">
+      <div className="grid grid-cols-1 items-center gap-x-5 gap-y-4 text-xs text-muted sm:grid-cols-2">
         <label className="flex flex-col gap-1.5">
           <span>Speed · {speed.toFixed(2)}×</span>
           <input
