@@ -13,16 +13,19 @@ const PACKAGE_MANAGERS = [
 export const InstallBlock = ({ dependencies }: { dependencies: string[] }) => {
   if (dependencies.length === 0) return null;
   return (
-    <Tabs.Root defaultValue="npm" className="flex flex-wrap items-center gap-2">
+    <Tabs.Root
+      defaultValue="npm"
+      className="overflow-hidden rounded-lg border border-border bg-panel"
+    >
       <Tabs.List
         aria-label="Package manager"
-        className="flex items-center gap-0.5 rounded-md border border-border bg-panel p-0.5"
+        className="flex flex-wrap gap-1 border-b border-border bg-background/60 px-2 py-1.5"
       >
         {PACKAGE_MANAGERS.map((pm) => (
           <Tabs.Trigger
             key={pm.id}
             value={pm.id}
-            className="rounded px-2 py-0.5 text-[11px] text-muted transition-colors hover:text-foreground data-[state=active]:bg-accent/15 data-[state=active]:text-accent-foreground"
+            className="rounded-md px-2.5 py-1 text-xs text-muted transition-colors hover:text-foreground data-[state=active]:bg-accent/15 data-[state=active]:text-accent-foreground"
           >
             {pm.id}
           </Tabs.Trigger>
@@ -31,9 +34,16 @@ export const InstallBlock = ({ dependencies }: { dependencies: string[] }) => {
       {PACKAGE_MANAGERS.map((pm) => {
         const command = `${pm.run} ${dependencies.join(' ')}`;
         return (
-          <Tabs.Content key={pm.id} value={pm.id} className="flex min-w-0 items-center gap-2">
-            <code className="truncate font-mono text-[11px] text-muted">{command}</code>
-            <CopyButton value={command} label="Copy" />
+          <Tabs.Content
+            key={pm.id}
+            value={pm.id}
+            className="flex items-center gap-2 py-2 pr-2 pl-4"
+          >
+            <pre className="min-w-0 flex-1 overflow-x-auto font-mono text-xs leading-relaxed text-foreground">
+              <span className="select-none text-muted">$ </span>
+              {command}
+            </pre>
+            <CopyButton value={command} label="Copy" className="shrink-0" />
           </Tabs.Content>
         );
       })}
