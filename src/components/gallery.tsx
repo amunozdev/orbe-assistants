@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import type { AdapterFilesWithCode, FileWithCode } from '@/registry/prompt';
 import { OrbCard, type OrbCardData } from './orb-card';
 import { GalleryFilters } from './gallery-filters';
+import { ComingSoonCard } from './coming-soon-card';
 
 export const Gallery = ({
   orbs,
@@ -39,6 +40,9 @@ export const Gallery = ({
       prev.includes(tech) ? prev.filter((t) => t !== tech) : [...prev, tech],
     );
 
+  const filtersActive =
+    query.trim() !== '' || activeTechs.length > 0 || zeroDeps || tailwind;
+
   return (
     <section>
       <GalleryFilters
@@ -63,6 +67,7 @@ export const Gallery = ({
           {filtered.map((orb) => (
             <OrbCard key={orb.id} orb={orb} shared={shared} adapters={adapters} />
           ))}
+          {!filtersActive && <ComingSoonCard />}
         </div>
       )}
     </section>
