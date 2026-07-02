@@ -4,7 +4,13 @@ import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'reac
 import type { RefObject } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { stateEnergy, type OrbState } from '../../lib/orb-state';
+import {
+  approach,
+  createStateMix,
+  stateEnergy,
+  type OrbState,
+  type StateMix,
+} from '../../lib/orb-state';
 
 const noiseGLSL = /* glsl */ `
 vec4 permute(vec4 x){ return mod(((x*34.0)+1.0)*x, 289.0); }
@@ -59,6 +65,7 @@ uniform float uTime;
 uniform float uAudio;
 uniform float uDistort;
 uniform float uFreq;
+uniform float uFreqBoost;
 uniform float uSpin;
 uniform float uBreath;
 varying float vNoise;
@@ -81,19 +88,26 @@ vec3 rotateY(vec3 p, float a){
   return vec3(c * p.x + s * p.z, p.y, c * p.z - s * p.x);
 }
 
-vec3 warpDomain(vec3 p){
-  return rotateY(p, uSpin) * uFreq + uTime * vec3(0.12, 0.27, 0.08);
+vec3 warpDomain(vec3 p, float freq){
+  return rotateY(p, uSpin) * freq + uTime * vec3(0.12, 0.27, 0.08);
+}
+
+float fieldNoise(vec3 p){
+  if (uFreqBoost >= 0.999) return fbm(warpDomain(p, 1.45));
+  float n = fbm(warpDomain(p, uFreq));
+  if (uFreqBoost > 0.001) n = mix(n, fbm(warpDomain(p, 1.45)), uFreqBoost);
+  return n;
 }
 
 vec3 surfacePoint(vec3 p, float amp){
-  return p + normalize(p) * fbm(warpDomain(p)) * amp;
+  return p + normalize(p) * fieldNoise(p) * amp;
 }
 
 void main(){
   float amp = uDistort * 0.55 + uAudio * 0.3;
   float radius = length(position);
   vec3 dir = normalize(position);
-  float noise = fbm(warpDomain(position));
+  float noise = fieldNoise(position);
   vec3 displaced = position + dir * noise * amp;
 
   vec3 axis = abs(dir.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0);
@@ -119,7 +133,7 @@ uniform vec3 uColorTo;
 uniform float uTime;
 uniform float uAudio;
 uniform float uRim;
-uniform float uMode;
+uniform float uShimmerPhase;
 varying float vNoise;
 varying vec3 vPos;
 varying vec3 vNormal;
@@ -158,23 +172,22 @@ void main(){
   col += rimColor * fres * (0.42 + uAudio * 0.38 + uRim * pulse * 0.55);
   col = col / (1.0 + col * 0.6);
 
-  float shimmer = mix(9.0, 33.0, 1.0 - step(0.5, abs(uMode - 2.0)));
-  float grain = hash(gl_FragCoord.xy + fract(uTime * shimmer) * 43.7);
+  float grain = hash(gl_FragCoord.xy + uShimmerPhase * 43.7);
   col *= 1.0 + (grain - 0.5) * 0.08;
 
   gl_FragColor = vec4(col, 1.0);
 }
 `;
 
-const MODE: Record<OrbState, number> = {
-  idle: 0,
-  connecting: 1,
-  listening: 2,
-  thinking: 3,
-  speaking: 4,
-  error: 5,
-  disabled: 6,
-};
+const STATE_KEYS = [
+  'idle',
+  'connecting',
+  'listening',
+  'thinking',
+  'speaking',
+  'error',
+  'disabled',
+] as const satisfies readonly OrbState[];
 
 const DISTORT: Record<OrbState, number> = {
   idle: 0.3,
@@ -189,7 +202,7 @@ const DISTORT: Record<OrbState, number> = {
 const FREQ: Record<OrbState, number> = {
   idle: 1,
   connecting: 1,
-  listening: 1.45,
+  listening: 1,
   thinking: 0.85,
   speaking: 1.1,
   error: 1.25,
@@ -221,9 +234,6 @@ const smoothEnergy = (state: OrbState, t: number): number => {
   return range[0] + range[1] * u * u;
 };
 
-const damp = (value: number, target: number, rate: number, dt: number): number =>
-  value + (target - value) * (1 - Math.exp(-rate * dt));
-
 const subscribeReducedMotion = (onChange: () => void): (() => void) => {
   const query = window.matchMedia('(prefers-reduced-motion: reduce)');
   query.addEventListener('change', onChange);
@@ -249,8 +259,14 @@ const Sphere = ({ state, speed, colorFrom, colorTo, reduced, levelRef }: SphereP
   const clock = useRef(0);
   const smoothed = useRef(0);
   const spin = useRef(0);
-  const breath = useRef(0);
-  const palette = useRef({ from: new THREE.Color(colorFrom), to: new THREE.Color(colorTo) });
+  const shimmer = useRef(0);
+  const mixRef = useRef<StateMix | null>(null);
+  const palette = useRef({
+    from: new THREE.Color(colorFrom),
+    to: new THREE.Color(colorTo),
+    errorFrom: new THREE.Color('#fb7185'),
+    errorTo: new THREE.Color('#f43f5e'),
+  });
 
   const uniforms = useMemo(
     () => ({
@@ -258,10 +274,11 @@ const Sphere = ({ state, speed, colorFrom, colorTo, reduced, levelRef }: SphereP
       uAudio: { value: 0 },
       uDistort: { value: 0.3 },
       uFreq: { value: 1 },
+      uFreqBoost: { value: 0 },
       uSpin: { value: 0 },
       uBreath: { value: 1 },
       uRim: { value: 0 },
-      uMode: { value: 0 },
+      uShimmerPhase: { value: 0 },
       uColorFrom: { value: new THREE.Color() },
       uColorTo: { value: new THREE.Color() },
     }),
@@ -269,47 +286,63 @@ const Sphere = ({ state, speed, colorFrom, colorTo, reduced, levelRef }: SphereP
   );
 
   useEffect(() => {
-    palette.current.from.set(state === 'error' ? '#fb7185' : colorFrom);
-    palette.current.to.set(state === 'error' ? '#f43f5e' : colorTo);
+    palette.current.from.set(colorFrom);
+    palette.current.to.set(colorTo);
     invalidate();
-  }, [state, colorFrom, colorTo, invalidate]);
+  }, [colorFrom, colorTo, invalidate]);
+
+  useEffect(() => {
+    invalidate();
+  }, [state, invalidate]);
 
   useFrame((_, delta) => {
     const u = matRef.current?.uniforms;
     if (!u) return;
+    if (!mixRef.current) mixRef.current = createStateMix(state);
     const dt = Math.min(delta, 0.1);
     if (!reduced) clock.current += dt * speed;
     const t = clock.current;
 
+    const weights = mixRef.current.update(state, reduced ? 1 : dt, reduced ? 1000 : 6);
+
+    let distort = 0;
+    let freq = 0;
+    let response = 0;
+    let energy = 0;
+    for (const key of STATE_KEYS) {
+      const w = weights[key];
+      if (w === 0) continue;
+      distort += w * DISTORT[key];
+      freq += w * FREQ[key];
+      response += w * RESPONSE[key];
+      energy += w * smoothEnergy(key, t);
+    }
+
     const live = levelRef?.current;
     const hasLive = typeof live === 'number' && live >= 0;
-    const floor = state === 'idle' ? 0.04 : 0;
-    const target = Math.min(Math.max(hasLive ? live : smoothEnergy(state, t), floor), 1.15);
-    const rimTarget = state === 'connecting' ? 1 : 0;
-    const breathTarget = state === 'thinking' ? 0.028 : state === 'idle' ? 0.01 : 0;
+    const floor = 0.04 * weights.idle;
+    const target = Math.min(Math.max(hasLive ? live : energy, floor), 1.15);
+    const breathAmp = 0.028 * weights.thinking + 0.01 * weights.idle;
 
     if (reduced) {
       smoothed.current = target;
-      u.uDistort.value = DISTORT[state];
-      u.uFreq.value = FREQ[state];
-      u.uRim.value = rimTarget;
-      breath.current = breathTarget;
     } else {
-      smoothed.current = damp(smoothed.current, target, RESPONSE[state], dt);
-      u.uDistort.value = damp(u.uDistort.value, DISTORT[state], 6, dt);
-      u.uFreq.value = damp(u.uFreq.value, FREQ[state], 4, dt);
-      u.uRim.value = damp(u.uRim.value, rimTarget, 5, dt);
-      breath.current = damp(breath.current, breathTarget, 4, dt);
-      spin.current += dt * speed * (state === 'thinking' ? 0.55 : 0.12);
+      smoothed.current = approach(smoothed.current, target, response, dt);
+      spin.current = (spin.current + dt * speed * (0.12 + 0.43 * weights.thinking)) % (Math.PI * 2);
+      shimmer.current = (shimmer.current + dt * speed * (9 + 24 * weights.listening)) % 1;
     }
 
     u.uTime.value = t;
     u.uAudio.value = smoothed.current;
+    u.uDistort.value = distort;
+    u.uFreq.value = freq;
+    u.uFreqBoost.value = weights.listening;
     u.uSpin.value = spin.current;
-    u.uBreath.value = 1 + breath.current * Math.sin(t * 1.3);
-    u.uMode.value = MODE[state];
-    u.uColorFrom.value.copy(palette.current.from);
-    u.uColorTo.value.copy(palette.current.to);
+    u.uBreath.value = 1 + breathAmp * Math.sin(t * 1.3);
+    u.uRim.value = weights.connecting;
+    u.uShimmerPhase.value = shimmer.current;
+    u.uColorFrom.value.copy(palette.current.from).lerp(palette.current.errorFrom, weights.error);
+    u.uColorTo.value.copy(palette.current.to).lerp(palette.current.errorTo, weights.error);
   });
 
   return (

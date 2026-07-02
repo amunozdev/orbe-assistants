@@ -1,6 +1,8 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { useSyncExternalStore } from 'react';
+import type { CSSProperties } from 'react';
 import { type OrbProps, type OrbState } from '../../lib/orb-state';
 
 const NebulaScene = dynamic(() => import('./nebula-scene').then((m) => m.NebulaScene), {
@@ -17,6 +19,30 @@ const GLOW: Record<OrbState, number> = {
   disabled: 0.2,
 };
 
+const subscribeReducedMotion = (onChange: () => void): (() => void) => {
+  const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+  query.addEventListener('change', onChange);
+  return () => query.removeEventListener('change', onChange);
+};
+
+const getReducedMotion = (): boolean => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const getServerReducedMotion = (): boolean => false;
+
+const glowLayer = (
+  from: string,
+  to: string,
+  opacity: number,
+  fade: string | undefined,
+): CSSProperties => ({
+  position: 'absolute',
+  inset: '-16%',
+  borderRadius: '50%',
+  background: `radial-gradient(circle at 50% 44%, color-mix(in srgb, ${to} 32%, transparent) 0%, color-mix(in srgb, ${from} 20%, transparent) 44%, transparent 70%)`,
+  opacity,
+  transition: fade,
+});
+
 export const NebulaOrb = ({
   state = 'idle',
   size = 180,
@@ -27,8 +53,10 @@ export const NebulaOrb = ({
   label = 'Assistant orb',
   className,
 }: OrbProps) => {
-  const glowFrom = state === 'error' ? '#fb7185' : colorFrom;
-  const glowTo = state === 'error' ? '#f43f5e' : colorTo;
+  const reduced = useSyncExternalStore(subscribeReducedMotion, getReducedMotion, getServerReducedMotion);
+  const fade = reduced ? undefined : 'opacity 600ms ease';
+  const glow = GLOW[state];
+  const isError = state === 'error';
   return (
     <div
       role="img"
@@ -40,19 +68,11 @@ export const NebulaOrb = ({
         height: size,
         opacity: state === 'disabled' ? 0.5 : 1,
         filter: state === 'disabled' ? 'grayscale(0.85)' : undefined,
+        transition: reduced ? undefined : 'opacity 400ms ease, filter 400ms ease',
       }}
     >
-      <div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          inset: '-16%',
-          borderRadius: '50%',
-          background: `radial-gradient(circle at 50% 44%, color-mix(in srgb, ${glowTo} 32%, transparent) 0%, color-mix(in srgb, ${glowFrom} 20%, transparent) 44%, transparent 70%)`,
-          opacity: GLOW[state],
-          transition: 'opacity 600ms ease',
-        }}
-      />
+      <div aria-hidden style={glowLayer(colorFrom, colorTo, isError ? 0 : glow, fade)} />
+      <div aria-hidden style={glowLayer('#fb7185', '#f43f5e', isError ? glow : 0, fade)} />
       <div
         aria-hidden
         style={{
@@ -64,8 +84,8 @@ export const NebulaOrb = ({
           borderRadius: '50%',
           background:
             'radial-gradient(ellipse at center, rgba(15, 23, 42, 0.3) 0%, rgba(15, 23, 42, 0.12) 45%, transparent 72%)',
-          opacity: 0.4 + GLOW[state] * 0.5,
-          transition: 'opacity 600ms ease',
+          opacity: 0.4 + glow * 0.5,
+          transition: fade,
         }}
       />
       <div style={{ position: 'absolute', inset: 0 }}>
