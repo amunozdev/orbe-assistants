@@ -1,13 +1,17 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   approach,
   createStateMix,
+  ERROR_COLOR_FROM,
+  ERROR_COLOR_TO,
+  hexToRgb,
   orbVars,
   type OrbProps,
   type OrbState,
 } from '../../lib/orb-state';
+import { observeActivity } from '../../lib/use-in-view';
 import { useOrbLevel } from '../../lib/use-orb-level';
 
 const GRID = 23;
@@ -16,8 +20,6 @@ const LIGHT_LEN = Math.hypot(-0.5, -0.65, 0.6);
 const LX = -0.5 / LIGHT_LEN;
 const LY = -0.65 / LIGHT_LEN;
 const LZ = 0.6 / LIGHT_LEN;
-const ERROR_FROM = '#fb7185';
-const ERROR_TO = '#f43f5e';
 
 const BAYER = [
   [0, 8, 2, 10],
@@ -57,22 +59,16 @@ const FIELD_MODES: readonly FieldMode[] = [
   { key: 'error', amp: 0.07, lvlAmp: 0, flow: -1, wave: 1.2, twist: 0 },
 ];
 
-type Rgb = [number, number, number];
+type Rgb = ReturnType<typeof hexToRgb>;
 
 const WHITE: Rgb = [255, 255, 255];
 const BLACK: Rgb = [0, 0, 0];
 
-const hexToRgb = (hex: string): Rgb => {
-  const clean = hex.replace('#', '');
-  const full =
-    clean.length === 3
-      ? clean
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : clean;
-  const n = Number.parseInt(full, 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+const REDUCED_LEVEL: Partial<Record<OrbState, number>> = {
+  connecting: 0.15,
+  listening: 0.55,
+  thinking: 0.25,
+  speaking: 0.8,
 };
 
 const parseColor = (ctx: CanvasRenderingContext2D, input: string): Rgb => {
@@ -103,9 +99,18 @@ export const PixelOrb = ({
   levelRef,
   label = 'Assistant orb',
   className,
+  ref: refProp,
 }: OrbProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const setHostRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      ref.current = node;
+      if (typeof refProp === 'function') refProp(node);
+      else if (refProp) refProp.current = node;
+    },
+    [refProp],
+  );
   const stateRef = useRef(state);
   const speedRef = useRef(speed);
   const colorRef = useRef({ from: colorFrom, to: colorTo });
@@ -134,8 +139,7 @@ export const PixelOrb = ({
     let raf = 0;
     let last: number | null = null;
     let clock = 0;
-    let inView = true;
-    let pageVisible = !document.hidden;
+    let visible = true;
     let stepsKey = '';
     let baseSteps: Rgb[] = [];
     let lastErrW = -1;
@@ -168,7 +172,7 @@ export const PixelOrb = ({
       ];
     };
 
-    const errSteps = buildSteps(ERROR_FROM, ERROR_TO);
+    const errSteps = buildSteps(ERROR_COLOR_FROM, ERROR_COLOR_TO);
 
     const ensureRamp = (from: string, to: string, errW: number) => {
       const key = `${from}|${to}`;
@@ -195,8 +199,9 @@ export const PixelOrb = ({
       const wConn = weights.connecting;
       const motion = spdBase * (1 - weights.disabled);
 
-      const rawLevel =
-        st === 'disabled'
+      const rawLevel = reduce
+        ? (REDUCED_LEVEL[st] ?? 0)
+        : st === 'disabled'
           ? 0
           : Math.min(
               1,
@@ -205,7 +210,7 @@ export const PixelOrb = ({
                 Number.parseFloat(host.style.getPropertyValue('--orb-level')) || 0,
               ),
             );
-      lvlSmooth = approach(lvlSmooth, rawLevel, 12, dt);
+      lvlSmooth = reduce ? rawLevel : approach(lvlSmooth, rawLevel, 12, dt);
       const lvl = lvlSmooth ** 1.4;
 
       ensureRamp(colorRef.current.from, colorRef.current.to, wErr);
@@ -286,8 +291,7 @@ export const PixelOrb = ({
     };
 
     const active = () =>
-      inView &&
-      pageVisible &&
+      visible &&
       !reduce &&
       (stateRef.current !== 'disabled' || stateMix.weights.disabled < 1);
 
@@ -314,33 +318,24 @@ export const PixelOrb = ({
       last = null;
     };
 
-    const io = new IntersectionObserver((entries) => {
-      for (const entry of entries) inView = entry.isIntersecting;
-      if (inView) wake();
+    const unobserve = observeActivity(host, (next) => {
+      visible = next;
+      if (next) wake();
       else halt();
     });
-    io.observe(host);
-
-    const onVisibility = () => {
-      pageVisible = !document.hidden;
-      if (pageVisible) wake();
-      else halt();
-    };
-    document.addEventListener('visibilitychange', onVisibility);
 
     wake();
 
     return () => {
       halt();
-      io.disconnect();
-      document.removeEventListener('visibilitychange', onVisibility);
+      unobserve();
       wakeRef.current = null;
     };
   }, []);
 
   return (
     <div
-      ref={ref}
+      ref={setHostRef}
       role="img"
       aria-label={label}
       data-state={state}
