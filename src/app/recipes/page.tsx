@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const RecipesPage = () => (
-  <main className="mx-auto max-w-5xl px-4 py-10 sm:px-5 sm:py-16">
+  <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-5 sm:py-16">
     <header className="mb-12 max-w-2xl">
       <Link
         href="/"

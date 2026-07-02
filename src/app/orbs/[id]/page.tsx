@@ -101,7 +101,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   });
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-5 sm:py-16">
+    <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-5 sm:py-16">
       <nav aria-label="Breadcrumb" className="mb-8 flex flex-wrap items-center gap-3 text-sm text-muted">
         <Link href="/" className="transition-colors hover:text-accent-foreground">
           ← All orbs

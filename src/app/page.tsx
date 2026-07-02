@@ -26,7 +26,7 @@ const Page = async () => {
   ]);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-5 sm:py-16">
+    <main className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-5 sm:py-16">
       <header className="mb-8 max-w-2xl sm:mb-12">
         <p className="mb-3 inline-block rounded-full border border-border px-3 py-1 text-xs text-muted">
           Open source · copy-paste
