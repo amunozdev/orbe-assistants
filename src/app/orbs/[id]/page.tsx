@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { orbs } from '@/registry/registry';
-import { readOrbFiles, readSharedFiles } from '@/registry/read-files';
+import { readAdapterFiles, readOrbFiles, readSharedFiles } from '@/registry/read-files';
 import { buildUsageSnippet } from '@/registry/prompt';
 import { OrbCard, type OrbCardData } from '@/components/orb-card';
 import { CopyButton } from '@/components/copy-button';
@@ -73,7 +73,11 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   const orb = orbs[index];
   const prev = orbs[(index - 1 + orbs.length) % orbs.length];
   const next = orbs[(index + 1) % orbs.length];
-  const [files, shared] = await Promise.all([readOrbFiles(orb), readSharedFiles()]);
+  const [files, shared, adapters] = await Promise.all([
+    readOrbFiles(orb),
+    readSharedFiles(),
+    readAdapterFiles(),
+  ]);
 
   const data: OrbCardData = {
     id: orb.id,
@@ -118,7 +122,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
       </header>
 
       <section aria-label="Playground" className="mb-14">
-        <OrbCard orb={data} shared={shared} />
+        <OrbCard orb={data} shared={shared} adapters={adapters} hideDetailsLink />
       </section>
 
       <section className="mb-14">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import clsx from 'clsx';
 import { ORB_STATES, type OrbState } from '@/registry/lib/orb-state';
 import { OrbStatus } from '@/registry/lib/orb-status';
@@ -9,6 +10,7 @@ import { useOrbCues } from '@/registry/lib/use-orb-cues';
 import {
   buildAiPrompt,
   buildUsageSnippet,
+  type AdapterFilesWithCode,
   type FileWithCode,
   type PromptProvider,
 } from '@/registry/prompt';
@@ -98,7 +100,17 @@ const stateButton = (s: OrbState, state: OrbState, setState: (next: OrbState) =>
   </button>
 );
 
-export const OrbCard = ({ orb, shared }: { orb: OrbCardData; shared: FileWithCode[] }) => {
+export const OrbCard = ({
+  orb,
+  shared,
+  adapters,
+  hideDetailsLink = false,
+}: {
+  orb: OrbCardData;
+  shared: FileWithCode[];
+  adapters: AdapterFilesWithCode;
+  hideDetailsLink?: boolean;
+}) => {
   const [state, setState] = useState<OrbState>('idle');
   const [mic, setMic] = useState(false);
   const [speed, setSpeed] = useState(1);
@@ -136,12 +148,19 @@ export const OrbCard = ({ orb, shared }: { orb: OrbCardData; shared: FileWithCod
 
   const aiPrompt = useMemo(
     () =>
-      `${buildAiPrompt(orb.name, orb.dependencies, orb.files, shared, provider)}
+      `${buildAiPrompt(
+        orb.name,
+        orb.dependencies,
+        orb.files,
+        shared,
+        provider,
+        provider === 'generic' ? undefined : adapters[provider],
+      )}
 
 Requested configuration (current playground values, render the orb with exactly these props):
 \`\`\`tsx
 ${usageFile.code}\`\`\``,
-    [orb.name, orb.dependencies, orb.files, shared, provider, usageFile.code],
+    [orb.name, orb.dependencies, orb.files, shared, provider, adapters, usageFile.code],
   );
 
   const reactive = state === 'listening' || state === 'speaking';
@@ -180,6 +199,14 @@ ${usageFile.code}\`\`\``,
             >
               #
             </a>
+            {!hideDetailsLink && (
+              <Link
+                href={`/orbs/${orb.id}`}
+                className="ml-2 text-xs font-normal text-muted underline decoration-border underline-offset-4 transition-colors hover:text-accent-foreground"
+              >
+                Details
+              </Link>
+            )}
           </h2>
           <p className="mt-1 text-sm text-muted">{orb.tagline}</p>
         </div>

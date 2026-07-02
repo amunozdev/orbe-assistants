@@ -1,5 +1,5 @@
 import { orbs } from '@/registry/registry';
-import { readOrbFiles, readSharedFiles } from '@/registry/read-files';
+import { readAdapterFiles, readOrbFiles, readSharedFiles } from '@/registry/read-files';
 import { Gallery } from '@/components/gallery';
 import type { OrbCardData } from '@/components/orb-card';
 
@@ -19,7 +19,11 @@ const getOrbs = (): Promise<OrbCardData[]> =>
   );
 
 const Page = async () => {
-  const [data, shared] = await Promise.all([getOrbs(), readSharedFiles()]);
+  const [data, shared, adapters] = await Promise.all([
+    getOrbs(),
+    readSharedFiles(),
+    readAdapterFiles(),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-16">
@@ -37,7 +41,7 @@ const Page = async () => {
         </p>
       </header>
 
-      <Gallery orbs={data} shared={shared} />
+      <Gallery orbs={data} shared={shared} adapters={adapters} />
     </main>
   );
 };

@@ -1,4 +1,4 @@
-import type { OrbFile } from './registry';
+import type { AdapterProvider, OrbFile } from './registry';
 import { ORB_STATES } from './lib/orb-state';
 import type { OrbState } from './lib/orb-state';
 
@@ -6,12 +6,14 @@ export interface FileWithCode extends OrbFile {
   code: string;
 }
 
+export type AdapterFilesWithCode = Record<AdapterProvider, FileWithCode>;
+
 const OPTIONAL_STATES = ['error', 'disabled'] as const satisfies readonly OrbState[];
 
 const stateUnion = (states: readonly OrbState[]): string =>
   states.map((s) => `'${s}'`).join(' | ');
 
-export type PromptProvider = 'generic' | 'vapi' | 'elevenlabs' | 'livekit' | 'openai-realtime';
+export type PromptProvider = 'generic' | AdapterProvider;
 
 const PROVIDER_NOTES: Record<Exclude<PromptProvider, 'generic'>, string> = {
   vapi: `Provider wiring (Vapi):
@@ -69,6 +71,7 @@ export const buildAiPrompt = (
   files: FileWithCode[],
   shared: FileWithCode[],
   provider: PromptProvider = 'generic',
+  adapter?: FileWithCode,
 ): string => {
   const deps = dependencies.length
     ? `First install: \`${dependencies.join(' ')}\`.`
@@ -107,5 +110,9 @@ export const AssistantOrb = () => {
 \`\`\`
 - For smooth per-frame transitions between states, orb-state.ts also exports the helpers approach() (exponential easing toward a target) and createStateMix() (blends state weights over time).
 - Accessibility: render the shared <OrbStatus state={state} /> (lib/orb-status.tsx) near the orb so state changes are announced to screen readers via a polite live region, and never signal the error state by color alone (keep a visible text cue such as OrbStatus).
-- Respect \`prefers-reduced-motion\`.${provider === 'generic' ? '' : `\n\n${PROVIDER_NOTES[provider]}`}`;
+- Respect \`prefers-reduced-motion\`.${provider === 'generic' ? '' : `\n\n${PROVIDER_NOTES[provider]}`}${
+    provider !== 'generic' && adapter
+      ? `\n\nProvider adapter (copy as ${adapter.path}):\n${block(adapter)}`
+      : ''
+  }`;
 };

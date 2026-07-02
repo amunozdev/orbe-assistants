@@ -1,11 +1,19 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { FileWithCode } from '@/registry/prompt';
+import type { AdapterFilesWithCode, FileWithCode } from '@/registry/prompt';
 import { OrbCard, type OrbCardData } from './orb-card';
 import { GalleryFilters } from './gallery-filters';
 
-export const Gallery = ({ orbs, shared }: { orbs: OrbCardData[]; shared: FileWithCode[] }) => {
+export const Gallery = ({
+  orbs,
+  shared,
+  adapters,
+}: {
+  orbs: OrbCardData[];
+  shared: FileWithCode[];
+  adapters: AdapterFilesWithCode;
+}) => {
   const [query, setQuery] = useState('');
   const [activeTechs, setActiveTechs] = useState<string[]>([]);
   const [zeroDeps, setZeroDeps] = useState(false);
@@ -53,7 +61,7 @@ export const Gallery = ({ orbs, shared }: { orbs: OrbCardData[]; shared: FileWit
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {filtered.map((orb) => (
-            <OrbCard key={orb.id} orb={orb} shared={shared} />
+            <OrbCard key={orb.id} orb={orb} shared={shared} adapters={adapters} />
           ))}
         </div>
       )}

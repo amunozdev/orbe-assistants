@@ -31,6 +31,31 @@ const SHARED_FILES: OrbFile[] = [
 
 export { SHARED_FILES };
 
+export type AdapterProvider = 'vapi' | 'elevenlabs' | 'livekit' | 'openai-realtime';
+
+export const ADAPTER_FILES: Record<AdapterProvider, OrbFile> = {
+  vapi: {
+    label: 'lib/create-vapi-adapter.ts',
+    path: 'src/registry/lib/create-vapi-adapter.ts',
+    lang: 'ts',
+  },
+  elevenlabs: {
+    label: 'lib/create-elevenlabs-adapter.ts',
+    path: 'src/registry/lib/create-elevenlabs-adapter.ts',
+    lang: 'ts',
+  },
+  livekit: {
+    label: 'lib/create-livekit-adapter.ts',
+    path: 'src/registry/lib/create-livekit-adapter.ts',
+    lang: 'ts',
+  },
+  'openai-realtime': {
+    label: 'lib/create-realtime-adapter.ts',
+    path: 'src/registry/lib/create-realtime-adapter.ts',
+    lang: 'ts',
+  },
+};
+
 export interface OrbPropMeta {
   name: string;
   type: string;
