@@ -1,10 +1,75 @@
+@property --sky-hi {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #16223c;
+}
+
+@property --sky-top {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0d1526;
+}
+
+@property --sky-mid {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0a111f;
+}
+
+@property --sky-low {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #04070e;
+}
+
+@property --aurora-hi {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #eafff6;
+}
+
+@property --aurora-green {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #22d3ee;
+}
+
+@property --aurora-cyan {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #22d3ee;
+}
+
+@property --aurora-pink {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #a855f7;
+}
+
+@property --aurora-glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #22d3ee;
+}
+
+@property --aurora-pulse {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --aurora-pulse-mix {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
 .orb {
   --orb-size: 168px;
   --orb-speed: 1;
   --orb-color-from: #22d3ee;
   --orb-color-to: #a855f7;
   --orb-level: 0;
-  --orb-tempo: 1;
   --sky-hi: #16223c;
   --sky-top: #0d1526;
   --sky-mid: #0a111f;
@@ -14,6 +79,7 @@
   --aurora-cyan: var(--orb-color-from);
   --aurora-pink: var(--orb-color-to);
   --aurora-glow: var(--orb-color-from);
+  --aurora-pulse-mix: 0;
   position: relative;
   width: var(--orb-size);
   height: var(--orb-size);
@@ -21,6 +87,19 @@
   box-shadow:
     0 22px 44px -20px rgb(8 12 26 / 0.5),
     0 6px 18px -8px rgb(10 16 32 / 0.32);
+  transition:
+    --sky-hi 0.4s ease,
+    --sky-top 0.4s ease,
+    --sky-mid 0.4s ease,
+    --sky-low 0.4s ease,
+    --aurora-hi 0.4s ease,
+    --aurora-green 0.4s ease,
+    --aurora-cyan 0.4s ease,
+    --aurora-pink 0.4s ease,
+    --aurora-glow 0.4s ease,
+    --aurora-pulse-mix 0.45s ease,
+    filter 0.3s ease,
+    opacity 0.3s ease;
 }
 
 .halo {
@@ -97,8 +176,8 @@
   -webkit-mask-image: linear-gradient(to bottom, black 26%, transparent 82%);
   mask-image: linear-gradient(to bottom, black 26%, transparent 82%);
   animation:
-    aurora-march-a calc(37s * var(--orb-tempo) / var(--orb-speed)) linear infinite,
-    aurora-sway-a calc(17.9s * var(--orb-tempo) / var(--orb-speed)) ease-in-out -7.3s infinite;
+    aurora-march-a calc(37s / var(--orb-speed)) linear infinite,
+    aurora-sway-a calc(17.9s / var(--orb-speed)) ease-in-out -7.3s infinite;
 }
 
 .veilMid {
@@ -120,8 +199,8 @@
   -webkit-mask-image: linear-gradient(to bottom, black 18%, transparent 76%);
   mask-image: linear-gradient(to bottom, black 18%, transparent 76%);
   animation:
-    aurora-march-b calc(19.1s * var(--orb-tempo) / var(--orb-speed)) linear infinite,
-    aurora-sway-b calc(13.3s * var(--orb-tempo) / var(--orb-speed)) ease-in-out -4.1s infinite;
+    aurora-march-b calc(19.1s / var(--orb-speed)) linear infinite,
+    aurora-sway-b calc(13.3s / var(--orb-speed)) ease-in-out -4.1s infinite;
 }
 
 .veilFront {
@@ -140,12 +219,16 @@
     transparent 84px
   );
   filter: blur(8px);
-  opacity: calc(0.08 + 0.92 * var(--orb-level));
+  opacity: calc(
+    (0.08 + 0.92 * var(--orb-level)) * (1 - var(--aurora-pulse-mix)) +
+      (0.06 + 0.44 * var(--aurora-pulse)) * var(--aurora-pulse-mix)
+  );
   -webkit-mask-image: linear-gradient(to bottom, black 10%, black 34%, transparent 66%);
   mask-image: linear-gradient(to bottom, black 10%, black 34%, transparent 66%);
   animation:
-    aurora-march-c calc(11.3s * var(--orb-tempo) / var(--orb-speed)) linear infinite,
-    aurora-sway-c calc(9.7s * var(--orb-tempo) / var(--orb-speed)) ease-in-out -2.9s infinite;
+    aurora-march-c calc(11.3s / var(--orb-speed)) linear infinite,
+    aurora-sway-c calc(9.7s / var(--orb-speed)) ease-in-out -2.9s infinite,
+    aurora-pulse calc(2.3s / var(--orb-speed)) ease-in-out infinite;
 }
 
 .film {
@@ -159,29 +242,16 @@
   box-shadow: inset 0 0 0 1px rgb(154 196 235 / 0.07);
 }
 
-.orb[data-state='listening'] {
-  --orb-tempo: 0.55;
-}
-
-.orb[data-state='speaking'] {
-  --orb-tempo: 0.8;
+.orb[data-state='connecting'] {
+  --aurora-pulse-mix: 1;
 }
 
 .orb[data-state='thinking'] {
-  --orb-tempo: 1.6;
   --aurora-green: var(--orb-color-to);
   --aurora-glow: var(--orb-color-to);
 }
 
-.orb[data-state='connecting'] .veilFront {
-  animation:
-    aurora-march-c calc(11.3s * var(--orb-tempo) / var(--orb-speed)) linear infinite,
-    aurora-sway-c calc(9.7s * var(--orb-tempo) / var(--orb-speed)) ease-in-out -2.9s infinite,
-    aurora-pulse calc(2.3s / var(--orb-speed)) ease-in-out infinite;
-}
-
 .orb[data-state='error'] {
-  --orb-tempo: 1.9;
   --sky-hi: #2b1322;
   --sky-top: #1d0e1a;
   --sky-mid: #150913;
@@ -288,10 +358,10 @@
 @keyframes aurora-pulse {
   0%,
   100% {
-    opacity: 0.06;
+    --aurora-pulse: 0;
   }
   55% {
-    opacity: 0.5;
+    --aurora-pulse: 1;
   }
 }
 
@@ -319,8 +389,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .stars,
-  .veil,
-  .orb[data-state='connecting'] .veilFront {
+  .veil {
     animation: none;
   }
 
