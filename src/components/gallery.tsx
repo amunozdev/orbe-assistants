@@ -59,7 +59,7 @@ export const Gallery = ({
           No orbs match the current search and filters.
         </p>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
           {filtered.map((orb) => (
             <OrbCard key={orb.id} orb={orb} shared={shared} adapters={adapters} />
           ))}

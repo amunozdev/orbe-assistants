@@ -26,15 +26,15 @@ const Page = async () => {
   ]);
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-16">
-      <header className="mb-12 max-w-2xl">
+    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-5 sm:py-16">
+      <header className="mb-8 max-w-2xl sm:mb-12">
         <p className="mb-3 inline-block rounded-full border border-border px-3 py-1 text-xs text-muted">
           Open source · copy-paste
         </p>
-        <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl">
+        <h1 className="text-balance text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
           Animated orbs for AI Assistants
         </h1>
-        <p className="mt-4 text-pretty text-base text-muted">
+        <p className="mt-4 text-pretty text-sm text-muted sm:text-base">
           A gallery of orbs with shared states:{' '}
           <span className="text-foreground">idle · connecting · listening · thinking · speaking</span>, ready to
           copy. Toggle states, try the mic reactivity and customize color, speed and size.

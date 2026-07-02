@@ -16,7 +16,7 @@ const FilterChip = ({
     onClick={onToggle}
     aria-pressed={active}
     className={clsx(
-      'rounded-full border px-2.5 py-1 text-xs transition-colors',
+      'inline-flex min-h-[40px] items-center rounded-full border px-3 py-2 text-xs transition-colors sm:min-h-0 sm:px-2.5 sm:py-1',
       active
         ? 'border-accent bg-accent/15 text-accent-foreground'
         : 'border-border text-muted hover:border-accent hover:text-foreground',
@@ -62,7 +62,7 @@ export const GalleryFilters = ({
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder="Search orbs by name or tagline"
-        className="w-full max-w-xs rounded-md border border-border bg-panel px-3 py-1.5 text-sm text-foreground transition-colors placeholder:text-muted focus:border-accent focus:outline-none"
+        className="w-full max-w-xs rounded-md border border-border bg-panel px-3 py-2 text-sm text-foreground transition-colors placeholder:text-muted focus:border-accent focus:outline-none sm:py-1.5"
       />
       <p role="status" className="text-xs text-muted">
         {count} of {total} orbs
