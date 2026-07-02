@@ -1,14 +1,19 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import { useEffect, useId, useRef } from 'react';
+import { useCallback, useEffect, useId, useRef } from 'react';
 import {
   approach,
   createStateMix,
+  ERROR_COLOR_FROM,
+  ERROR_COLOR_TO,
   orbVars,
   stateEnergy,
   type OrbProps,
+  type OrbState,
 } from '../../lib/orb-state';
+import { observeActivity } from '../../lib/use-in-view';
+import { useOrbLevel } from '../../lib/use-orb-level';
 
 interface Satellite {
   r: number;
@@ -36,8 +41,23 @@ const STATIC_XY = SATELLITES.map((s) => ({
 
 const STATIC_POSE = STATIC_XY.map((p) => ({ cx: p.x.toFixed(2), cy: p.y.toFixed(2) }));
 
-const ROSE_FROM = '#fb7185';
-const ROSE_TO = '#f43f5e';
+interface StaticParams {
+  disp: number;
+  rx: number;
+  ry: number;
+  d: number;
+  shine: number;
+}
+
+const STATIC_PARAMS: Record<OrbState, StaticParams> = {
+  idle: { disp: 7, rx: 1, ry: 1, d: 0, shine: 0.7 },
+  connecting: { disp: 10, rx: 0.96, ry: 0.96, d: 6, shine: 0.55 },
+  listening: { disp: 13, rx: 1.06, ry: 1.06, d: -5, shine: 0.82 },
+  thinking: { disp: 16, rx: 1.04, ry: 0.94, d: -9, shine: 0.6 },
+  speaking: { disp: 14, rx: 1.1, ry: 1.1, d: 9, shine: 0.92 },
+  error: { disp: 4.5, rx: 0.94, ry: 0.94, d: -13, shine: 0.45 },
+  disabled: { disp: 7, rx: 1, ry: 1, d: 0, shine: 0.6 },
+};
 
 const HIGHLIGHT = 'color-mix(in oklab, #ffffff 74%, var(--goo-from))';
 const MIDTONE = 'color-mix(in oklab, var(--goo-from) 46%, var(--goo-to))';
@@ -73,6 +93,7 @@ export const GooeyOrb = ({
   levelRef,
   label = 'Assistant orb',
   className,
+  ref,
 }: OrbProps) => {
   const rawId = useId().replace(/:/g, '');
   const filterId = `gooey-${rawId}`;
@@ -90,12 +111,23 @@ export const GooeyOrb = ({
   const colorsRef = useRef({ from: colorFrom, to: colorTo });
   const syncRef = useRef<(() => void) | null>(null);
 
+  const setHostRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      hostRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref],
+  );
+
   useEffect(() => {
     stateRef.current = state;
     speedRef.current = speed;
     colorsRef.current = { from: colorFrom, to: colorTo };
     syncRef.current?.();
   });
+
+  useOrbLevel(hostRef, state, levelRef);
 
   const disabled = state === 'disabled';
 
@@ -113,29 +145,38 @@ export const GooeyOrb = ({
       host.style.setProperty('--goo-to', toColor);
     };
 
-    const setStaticPose = () => {
+    const setStaticPose = (st: OrbState) => {
+      const params = STATIC_PARAMS[st];
+      const rx = CORE_R * params.rx;
+      const ry = CORE_R * params.ry;
       sceneRef.current?.setAttribute('transform', 'translate(0 0)');
-      dispRef.current?.setAttribute('scale', '7');
-      pose(coreRef.current, { cx: '50', cy: '50', rx: String(CORE_R), ry: String(CORE_R) });
+      dispRef.current?.setAttribute('scale', String(params.disp));
+      pose(coreRef.current, { cx: '50', cy: '50', rx: rx.toFixed(2), ry: ry.toFixed(2) });
       pose(shineRef.current, {
-        cx: (50 - CORE_R * 0.24).toFixed(2),
-        cy: (50 - CORE_R * 0.3).toFixed(2),
-        rx: (CORE_R * 0.45).toFixed(2),
-        ry: (CORE_R * 0.34).toFixed(2),
+        cx: (50 - rx * 0.24).toFixed(2),
+        cy: (50 - ry * 0.3).toFixed(2),
+        rx: (rx * 0.45).toFixed(2),
+        ry: (ry * 0.34).toFixed(2),
+        opacity: params.shine.toFixed(2),
       });
       SATELLITES.forEach((s, i) => {
-        pose(satRefs.current[i] ?? null, { cx: STATIC_POSE[i].cx, cy: STATIC_POSE[i].cy });
+        const dd = Math.max(s.fused + 2, s.staticD + params.d);
+        pose(satRefs.current[i] ?? null, {
+          cx: (50 + Math.cos(s.phase) * dd).toFixed(2),
+          cy: (50 + Math.sin(s.phase) * dd).toFixed(2),
+        });
       });
       dropRef.current?.setAttribute('r', '0');
     };
 
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       const applyStatic = () => {
-        setStaticPose();
-        const error = stateRef.current === 'error';
+        const st = stateRef.current;
+        setStaticPose(st);
+        const error = st === 'error';
         setVars(
-          error ? ROSE_FROM : colorsRef.current.from,
-          error ? ROSE_TO : colorsRef.current.to,
+          error ? ERROR_COLOR_FROM : colorsRef.current.from,
+          error ? ERROR_COLOR_TO : colorsRef.current.to,
         );
       };
       applyStatic();
@@ -166,6 +207,11 @@ export const GooeyOrb = ({
     const theta = SATELLITES.map((s) => s.phase);
     const dist = SATELLITES.map((s) => s.staticD);
     const mix = createStateMix(stateRef.current);
+
+    const bandOr = (name: string, fallback: number) => {
+      const value = Number.parseFloat(host.style.getPropertyValue(name));
+      return Number.isNaN(value) ? fallback : value;
+    };
 
     const frame = (now: number) => {
       if (last === null) last = now;
@@ -210,19 +256,24 @@ export const GooeyOrb = ({
       amp = approach(amp, ampTarget, 4, dt);
       squash = approach(squash, 0.055 * wThink, 5, dt);
 
+      const bass = bandOr('--orb-bass', level);
+      const mid = bandOr('--orb-mid', level);
+      const treble = bandOr('--orb-treble', level);
+
       const away = 1 - wDisabled;
-      const dx = amp * Math.sin(phX) * away;
-      const dy = amp * Math.sin(phY + 1.1) * away;
+      const wob = 1 + 0.3 * mid;
+      const dx = amp * wob * Math.sin(phX) * away;
+      const dy = amp * wob * Math.sin(phY + 1.1) * away;
       const bx = 50 + dx;
       const by = 50 + dy;
 
       const p = wError > 0.001 ? errorPulse(t) : 0;
-      let r = (CORE_R + 0.8 * Math.sin(phB) + 3.2 * level) * (1 - 0.09 * p * wError);
-      let scale = 8 + 26 * level;
+      let r = (CORE_R + 0.8 * Math.sin(phB) + 2.1 * level + 1.7 * bass) * (1 - 0.09 * p * wError);
+      let scale = 8 + 18 * level + 7 * bass + 2.4 * treble * Math.sin(phB * 12);
       scale += (6.5 + 3 * p - scale) * wError;
       r += (CORE_R - r) * wDisabled;
       scale += (7 - scale) * wDisabled;
-      const sq = squash * Math.sin(phX * 2 + 1.2);
+      const sq = squash * (1 + 0.5 * mid) * Math.sin(phX * 2 + 1.2);
 
       sceneRef.current?.setAttribute('transform', `translate(${(-dx).toFixed(2)} ${(-dy).toFixed(2)})`);
       dispRef.current?.setAttribute('scale', scale.toFixed(2));
@@ -237,9 +288,10 @@ export const GooeyOrb = ({
         cy: (by - r * 0.3).toFixed(2),
         rx: (r * 0.45).toFixed(2),
         ry: (r * 0.34).toFixed(2),
+        opacity: (0.65 + 0.35 * treble).toFixed(3),
       });
 
-      const satLevel = (level + 0.26 * wConnect) * (1 - 0.8 * wError);
+      const satLevel = (level + 0.26 * wConnect + 0.16 * bass) * (1 - 0.8 * wError);
       SATELLITES.forEach((s, i) => {
         theta[i] += step * (s.w + (1.5 - s.w) * wConnect);
         const reach = s.fused + (s.detach - s.fused) * smoothstep((satLevel - s.lo) / (s.hi - s.lo));
@@ -279,8 +331,8 @@ export const GooeyOrb = ({
       }
 
       const pct = Math.round(wError * 100);
-      const fromVar = mixToward(colorsRef.current.from, ROSE_FROM, pct);
-      const toVar = mixToward(colorsRef.current.to, ROSE_TO, pct);
+      const fromVar = mixToward(colorsRef.current.from, ERROR_COLOR_FROM, pct);
+      const toVar = mixToward(colorsRef.current.to, ERROR_COLOR_TO, pct);
       if (fromVar !== lastFrom || toVar !== lastTo) {
         lastFrom = fromVar;
         lastTo = toVar;
@@ -288,12 +340,14 @@ export const GooeyOrb = ({
       }
 
       if (st === 'disabled' && wDisabled > 0.99 && wError < 0.005 && dropStart === null) {
-        setStaticPose();
+        setStaticPose('disabled');
         running = false;
         return;
       }
       raf = requestAnimationFrame(frame);
     };
+
+    let active = !document.hidden;
 
     const stop = () => {
       running = false;
@@ -301,23 +355,23 @@ export const GooeyOrb = ({
     };
 
     const start = () => {
-      if (running || document.hidden) return;
+      if (running || !active) return;
       running = true;
       last = null;
       raf = requestAnimationFrame(frame);
     };
 
-    const onVisibility = () => {
-      if (document.hidden) stop();
-      else start();
-    };
+    const unobserve = observeActivity(host, (next) => {
+      active = next;
+      if (next) start();
+      else stop();
+    });
 
     syncRef.current = start;
     start();
-    document.addEventListener('visibilitychange', onVisibility);
     return () => {
       stop();
-      document.removeEventListener('visibilitychange', onVisibility);
+      unobserve();
       syncRef.current = null;
     };
   }, [levelRef]);
@@ -326,7 +380,7 @@ export const GooeyOrb = ({
 
   return (
     <div
-      ref={hostRef}
+      ref={setHostRef}
       role="img"
       aria-label={label}
       data-state={state}
