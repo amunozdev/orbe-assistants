@@ -1,4 +1,4 @@
-import type { CSSProperties, RefObject } from 'react';
+import type { CSSProperties, Ref, RefObject } from 'react';
 
 export type OrbState =
   | 'idle'
@@ -26,7 +26,39 @@ export interface OrbProps {
   levelRef?: RefObject<number>;
   label?: string;
   className?: string;
+  ref?: Ref<HTMLDivElement>;
 }
+
+export const ERROR_COLOR_FROM = '#fb7185';
+export const ERROR_COLOR_TO = '#f43f5e';
+
+export const hexToRgb = (hex: string): [number, number, number] => {
+  const clean = hex.replace('#', '');
+  const full =
+    clean.length === 3
+      ? clean
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : clean;
+  const n = Number.parseInt(full, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+};
+
+export type OrbMotion = 'ripple' | 'pulse' | 'flow' | 'none';
+
+export const stateMotion = (state: OrbState): OrbMotion => {
+  switch (state) {
+    case 'listening':
+      return 'ripple';
+    case 'thinking':
+      return 'pulse';
+    case 'speaking':
+      return 'flow';
+    default:
+      return 'none';
+  }
+};
 
 export const stateEnergy = (state: OrbState, t: number): number => {
   switch (state) {
