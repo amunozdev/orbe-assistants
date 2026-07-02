@@ -53,5 +53,6 @@ export const AssistantOrb = () => {
 };
 \`\`\`
 - For smooth per-frame transitions between states, orb-state.ts also exports the helpers approach() (exponential easing toward a target) and createStateMix() (blends state weights over time).
+- Accessibility: render the shared <OrbStatus state={state} /> (lib/orb-status.tsx) near the orb so state changes are announced to screen readers via a polite live region, and never signal the error state by color alone (keep a visible text cue such as OrbStatus).
 - Respect \`prefers-reduced-motion\`.`;
 };

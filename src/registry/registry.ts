@@ -26,6 +26,7 @@ const SHARED_FILES: OrbFile[] = [
   { label: 'lib/use-audio-bands.ts', path: 'src/registry/lib/use-audio-bands.ts', lang: 'ts' },
   { label: 'lib/use-waveform.ts', path: 'src/registry/lib/use-waveform.ts', lang: 'ts' },
   { label: 'lib/use-orb-cues.ts', path: 'src/registry/lib/use-orb-cues.ts', lang: 'ts' },
+  { label: 'lib/orb-status.tsx', path: 'src/registry/lib/orb-status.tsx', lang: 'tsx' },
 ];
 
 export { SHARED_FILES };
