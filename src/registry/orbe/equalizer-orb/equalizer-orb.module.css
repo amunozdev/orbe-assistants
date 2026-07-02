@@ -4,77 +4,276 @@
   --orb-color-from: #38bdf8;
   --orb-color-to: #818cf8;
   --orb-level: 0;
+  --eq-ink: color-mix(in oklab, var(--orb-color-from) 45%, #0f172a);
+  --eq-halo-mix: color-mix(in oklab, var(--orb-color-from), var(--orb-color-to) 60%);
+  --eq-surface-hi: color-mix(in oklab, var(--orb-color-from) 10%, #ffffff);
+  --eq-surface-lo: color-mix(in oklab, var(--orb-color-to) 16%, #e9edf7);
+  --eq-rim: color-mix(in oklab, var(--orb-color-from) 38%, #b9c3d8);
+  --eq-sheen: rgb(255 255 255 / 0.65);
+  --eq-vignette: color-mix(in oklab, #0f172a, transparent 84%);
+  --eq-glow-halo: color-mix(in oklab, var(--eq-halo-mix), transparent 35%);
+  --eq-glow-core: color-mix(in oklab, var(--orb-color-from), transparent 25%);
+  --eq-shadow-tint: color-mix(in oklab, var(--eq-ink), transparent 40%);
+  --eq-shadow-tint-active: color-mix(in oklab, var(--eq-ink), transparent 28%);
+  --eq-shadow-glow: transparent;
+  --eq-shadow-glow-active: transparent;
+  --eq-shadow:
+    0 14px 28px -16px var(--eq-shadow-tint),
+    0 0 26px -8px var(--eq-shadow-glow);
+  --eq-shadow-active:
+    0 16px 34px -16px var(--eq-shadow-tint-active),
+    0 0 40px -6px var(--eq-shadow-glow-active);
   position: relative;
   display: grid;
   place-items: center;
   width: var(--orb-size);
   height: var(--orb-size);
-  border-radius: 50%;
-  overflow: hidden;
   isolation: isolate;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04), transparent 70%);
 }
 
-.glow {
+@media (prefers-color-scheme: dark) {
+  .orb {
+    --eq-surface-hi: color-mix(in oklab, var(--orb-color-from) 20%, #0b0e17);
+    --eq-surface-lo: color-mix(in oklab, var(--orb-color-to) 11%, #05070d);
+    --eq-rim: color-mix(in oklab, var(--orb-color-from) 42%, #141824);
+    --eq-sheen: rgb(255 255 255 / 0.09);
+    --eq-vignette: rgb(0 0 0 / 0.55);
+    --eq-glow-halo: var(--eq-halo-mix);
+    --eq-glow-core: var(--orb-color-from);
+    --eq-shadow-tint: rgb(0 0 0 / 0.6);
+    --eq-shadow-tint-active: rgb(0 0 0 / 0.55);
+    --eq-shadow-glow: color-mix(in oklab, var(--orb-color-from), transparent 68%);
+    --eq-shadow-glow-active: color-mix(in oklab, var(--orb-color-from), transparent 55%);
+  }
+}
+
+@supports (color: light-dark(#fff, #000)) {
+  .orb {
+    --eq-surface-hi: light-dark(
+      color-mix(in oklab, var(--orb-color-from) 10%, #ffffff),
+      color-mix(in oklab, var(--orb-color-from) 20%, #0b0e17)
+    );
+    --eq-surface-lo: light-dark(
+      color-mix(in oklab, var(--orb-color-to) 16%, #e9edf7),
+      color-mix(in oklab, var(--orb-color-to) 11%, #05070d)
+    );
+    --eq-rim: light-dark(
+      color-mix(in oklab, var(--orb-color-from) 38%, #b9c3d8),
+      color-mix(in oklab, var(--orb-color-from) 42%, #141824)
+    );
+    --eq-sheen: light-dark(rgb(255 255 255 / 0.65), rgb(255 255 255 / 0.09));
+    --eq-vignette: light-dark(color-mix(in oklab, #0f172a, transparent 84%), rgb(0 0 0 / 0.55));
+    --eq-glow-halo: light-dark(
+      color-mix(in oklab, var(--eq-halo-mix), transparent 35%),
+      var(--eq-halo-mix)
+    );
+    --eq-glow-core: light-dark(
+      color-mix(in oklab, var(--orb-color-from), transparent 25%),
+      var(--orb-color-from)
+    );
+    --eq-shadow-tint: light-dark(
+      color-mix(in oklab, var(--eq-ink), transparent 40%),
+      rgb(0 0 0 / 0.6)
+    );
+    --eq-shadow-tint-active: light-dark(
+      color-mix(in oklab, var(--eq-ink), transparent 28%),
+      rgb(0 0 0 / 0.55)
+    );
+    --eq-shadow-glow: light-dark(
+      transparent,
+      color-mix(in oklab, var(--orb-color-from), transparent 68%)
+    );
+    --eq-shadow-glow-active: light-dark(
+      transparent,
+      color-mix(in oklab, var(--orb-color-from), transparent 55%)
+    );
+  }
+}
+
+.ring {
   position: absolute;
-  width: 78%;
-  height: 78%;
+  inset: 0;
+  z-index: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--orb-color-from), transparent 68%);
-  opacity: calc(0.25 + 0.5 * var(--orb-level));
-  filter: blur(calc(10px + 20px * var(--orb-level)));
-  transition: opacity 0.12s linear;
+  border: 1.5px solid color-mix(in oklab, var(--orb-color-from), var(--orb-color-to) 45%);
+  opacity: 0;
+  transform: scale(0.94);
+}
+
+.orb[data-state='listening'] .ring {
+  opacity: calc(0.18 + 0.6 * var(--orb-level));
+  transform: scale(calc(0.965 + 0.05 * var(--orb-level)));
+}
+
+.disc {
+  position: absolute;
+  inset: 3.5%;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(120% 120% at 50% 18%, var(--eq-surface-hi), var(--eq-surface-lo) 78%);
+  box-shadow:
+    inset 0 0 0 1px var(--eq-rim),
+    var(--eq-shadow);
+  transform: scale(calc(1 + 0.02 * var(--orb-level)));
+}
+
+.disc::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: 50%;
+  background: radial-gradient(85% 55% at 50% 8%, var(--eq-sheen), transparent 62%);
+  pointer-events: none;
+}
+
+.disc::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: 50%;
+  background: radial-gradient(100% 100% at 50% 45%, transparent 58%, var(--eq-vignette));
+  pointer-events: none;
+}
+
+.orb[data-state='listening'] .disc,
+.orb[data-state='speaking'] .disc {
+  box-shadow:
+    inset 0 0 0 1px var(--eq-rim),
+    var(--eq-shadow-active);
+}
+
+.glowHalo {
+  position: absolute;
+  z-index: 0;
+  width: 86%;
+  height: 86%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--eq-glow-halo), transparent 70%);
+  filter: blur(24px);
+  opacity: calc(0.16 + 0.4 * var(--orb-level));
+  transform: scale(calc(1 + 0.12 * var(--orb-level)));
+}
+
+.glowCore {
+  position: absolute;
+  z-index: 1;
+  width: 44%;
+  height: 44%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--eq-glow-core), transparent 68%);
+  filter: blur(6px);
+  opacity: calc(0.26 + 0.5 * var(--orb-level));
+  transform: scale(calc(1 + 0.2 * var(--orb-level)));
 }
 
 .bars {
   position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6%;
-  width: 64%;
-  height: 64%;
+  width: 68%;
+  height: 58%;
+  -webkit-box-reflect: below 2px linear-gradient(to bottom, transparent 55%, rgb(0 0 0 / 0.3));
 }
 
 .bar {
+  --eq-dot: calc(var(--orb-size) * (0.013 + 0.006 * var(--bar-gain)));
+  --eq-lo: calc((7% + 7% * var(--orb-level)) * var(--bar-gain));
+  --eq-mid: calc((14% + 18% * var(--orb-level)) * var(--bar-gain));
+  --eq-mh: calc((17% + 24% * var(--orb-level)) * var(--bar-gain));
+  --eq-hi: calc((20% + 30% * var(--orb-level)) * var(--bar-gain));
+  --eq-cn: calc((13% + 22% * var(--orb-level)) * (0.7 + 0.3 * var(--bar-gain)));
   width: 8%;
-  height: 100%;
+  height: var(--bar-h);
   border-radius: 999px;
-  background: linear-gradient(to top, var(--orb-color-from), var(--orb-color-to));
-  transform: scaleY(0.18);
-  transform-origin: center;
-  box-shadow: 0 0 calc(4px + 10px * var(--orb-level))
-    color-mix(in oklab, var(--orb-color-to), transparent 55%);
-  animation: orb-eq calc(0.9s / var(--orb-speed)) ease-in-out infinite;
+  background: linear-gradient(
+    to top,
+    var(--orb-color-from),
+    color-mix(in oklab, var(--orb-color-from), var(--orb-color-to) 55%) 55%,
+    color-mix(in oklab, var(--orb-color-to), #fff 30%)
+  );
+  filter: hue-rotate(var(--bar-hue));
 }
 
 .bar1 {
-  height: 46%;
-  animation-delay: calc(-0.05s / var(--orb-speed));
+  --bar-h: 48%;
+  --bar-gain: 0.55;
+  --bar-hue: -5deg;
+  --bar-i: 0;
+  --bar-dur: 0.96s;
+  --bar-delay: -0.31s;
+  --bar-ease: cubic-bezier(0.45, 0, 0.55, 1);
 }
+
 .bar2 {
-  height: 68%;
-  animation-delay: calc(-0.22s / var(--orb-speed));
+  --bar-h: 66%;
+  --bar-gain: 0.7;
+  --bar-hue: -3deg;
+  --bar-i: 1;
+  --bar-dur: 0.78s;
+  --bar-delay: -0.12s;
+  --bar-ease: cubic-bezier(0.33, 0.72, 0.3, 1);
 }
+
 .bar3 {
-  height: 86%;
-  animation-delay: calc(-0.4s / var(--orb-speed));
+  --bar-h: 86%;
+  --bar-gain: 0.9;
+  --bar-hue: -1deg;
+  --bar-i: 2;
+  --bar-dur: 1.08s;
+  --bar-delay: -0.54s;
+  --bar-ease: cubic-bezier(0.6, 0.04, 0.4, 0.96);
 }
+
 .bar4 {
-  height: 100%;
-  animation-delay: calc(-0.1s / var(--orb-speed));
+  --bar-h: 100%;
+  --bar-gain: 1;
+  --bar-hue: 0deg;
+  --bar-i: 3;
+  --bar-dur: 0.72s;
+  --bar-delay: -0.2s;
+  --bar-ease: cubic-bezier(0.45, 0, 0.55, 1);
 }
+
 .bar5 {
-  height: 86%;
-  animation-delay: calc(-0.33s / var(--orb-speed));
+  --bar-h: 84%;
+  --bar-gain: 0.88;
+  --bar-hue: 1deg;
+  --bar-i: 4;
+  --bar-dur: 0.9s;
+  --bar-delay: -0.66s;
+  --bar-ease: cubic-bezier(0.33, 0.72, 0.3, 1);
 }
+
 .bar6 {
-  height: 68%;
-  animation-delay: calc(-0.16s / var(--orb-speed));
+  --bar-h: 64%;
+  --bar-gain: 0.72;
+  --bar-hue: 3deg;
+  --bar-i: 5;
+  --bar-dur: 0.84s;
+  --bar-delay: -0.4s;
+  --bar-ease: cubic-bezier(0.6, 0.04, 0.4, 0.96);
 }
+
 .bar7 {
-  height: 46%;
-  animation-delay: calc(-0.28s / var(--orb-speed));
+  --bar-h: 50%;
+  --bar-gain: 0.55;
+  --bar-hue: 5deg;
+  --bar-i: 6;
+  --bar-dur: 1.02s;
+  --bar-delay: -0.09s;
+  --bar-ease: cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+.orb[data-state='idle'] .disc {
+  animation: eq-breathe calc(4s / var(--orb-speed)) ease-in-out infinite;
 }
 
 .orb[data-state='error'] {
@@ -82,29 +281,278 @@
   --orb-color-to: #f43f5e;
 }
 
+.orb[data-state='error'] .bars {
+  animation: eq-shake calc(1.8s / var(--orb-speed)) linear infinite;
+}
+
 .orb[data-state='disabled'] {
   filter: grayscale(0.85);
   opacity: 0.5;
 }
 
-.orb[data-state='disabled'] .bar {
-  animation: none;
-  transform: scaleY(0.2);
+@supports (clip-path: inset(10% 0 round 999px)) {
+  .bar {
+    clip-path: inset(calc(50% - var(--eq-dot)) 0 round 999px);
+  }
+
+  .orb[data-state='listening'] .bar,
+  .orb[data-state='speaking'] .bar {
+    animation-duration: calc(var(--bar-dur) / var(--orb-speed));
+    animation-delay: calc(var(--bar-delay) / var(--orb-speed));
+    animation-timing-function: var(--bar-ease);
+    animation-iteration-count: infinite;
+  }
+
+  .orb[data-state='listening'] .bar1,
+  .orb[data-state='speaking'] .bar1 {
+    animation-name: eq-b;
+  }
+
+  .orb[data-state='listening'] .bar2,
+  .orb[data-state='speaking'] .bar2 {
+    animation-name: eq-a;
+  }
+
+  .orb[data-state='listening'] .bar3,
+  .orb[data-state='speaking'] .bar3 {
+    animation-name: eq-c;
+  }
+
+  .orb[data-state='listening'] .bar4,
+  .orb[data-state='speaking'] .bar4 {
+    animation-name: eq-a;
+  }
+
+  .orb[data-state='listening'] .bar5,
+  .orb[data-state='speaking'] .bar5 {
+    animation-name: eq-b;
+  }
+
+  .orb[data-state='listening'] .bar6,
+  .orb[data-state='speaking'] .bar6 {
+    animation-name: eq-c;
+  }
+
+  .orb[data-state='listening'] .bar7,
+  .orb[data-state='speaking'] .bar7 {
+    animation-name: eq-a;
+  }
+
+  .orb[data-state='thinking'] .bar {
+    animation: eq-wave calc(2.4s / var(--orb-speed)) cubic-bezier(0.45, 0, 0.55, 1)
+      calc(var(--bar-i) * -0.3s / var(--orb-speed)) infinite;
+  }
+
+  .orb[data-state='connecting'] .bar {
+    animation: eq-connect calc(1.6s / var(--orb-speed)) ease-in-out
+      calc(var(--bar-i) * 0.09s / var(--orb-speed)) infinite both;
+  }
+
+  .orb[data-state='error'] .bar {
+    clip-path: inset(calc(50% - var(--orb-size) * 0.012) 0 round 999px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orb[data-state] .bar {
+      animation: none;
+    }
+
+    .orb[data-state='connecting'] .bar {
+      clip-path: inset(calc(50% - (6% + 9% * var(--bar-gain))) 0 round 999px);
+    }
+
+    .orb[data-state='thinking'] .bar {
+      clip-path: inset(calc(50% - (9% + 16% * var(--bar-gain))) 0 round 999px);
+    }
+
+    .orb[data-state='listening'] .bar,
+    .orb[data-state='speaking'] .bar {
+      clip-path: inset(calc(50% - (11% + 27% * var(--bar-gain))) 0 round 999px);
+    }
+
+    .orb[data-state='error'] .bar {
+      clip-path: inset(calc(50% - var(--orb-size) * 0.012) 0 round 999px);
+    }
+  }
 }
 
-@keyframes orb-eq {
+@supports not (clip-path: inset(10% 0 round 999px)) {
+  .bar {
+    transform: scaleY(0.14);
+  }
+
+  .orb[data-state='listening'] .bar,
+  .orb[data-state='speaking'] .bar {
+    animation: eq-y calc(var(--bar-dur) / var(--orb-speed)) var(--bar-ease)
+      calc(var(--bar-delay) / var(--orb-speed)) infinite;
+  }
+
+  .orb[data-state='thinking'] .bar {
+    animation: eq-y calc(2.4s / var(--orb-speed)) cubic-bezier(0.45, 0, 0.55, 1)
+      calc(var(--bar-i) * -0.3s / var(--orb-speed)) infinite;
+  }
+
+  .orb[data-state='connecting'] .bar {
+    animation: eq-y-connect calc(1.6s / var(--orb-speed)) ease-in-out
+      calc(var(--bar-i) * 0.09s / var(--orb-speed)) infinite both;
+  }
+
+  .orb[data-state='error'] .bar {
+    transform: scaleY(0.12);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .orb[data-state] .bar {
+      animation: none;
+    }
+
+    .orb[data-state='connecting'] .bar {
+      transform: scaleY(calc(0.16 + 0.14 * var(--bar-gain)));
+    }
+
+    .orb[data-state='thinking'] .bar {
+      transform: scaleY(calc(0.2 + 0.26 * var(--bar-gain)));
+    }
+
+    .orb[data-state='listening'] .bar,
+    .orb[data-state='speaking'] .bar {
+      transform: scaleY(calc(0.24 + 0.5 * var(--bar-gain)));
+    }
+
+    .orb[data-state='error'] .bar {
+      transform: scaleY(0.12);
+    }
+  }
+}
+
+@keyframes eq-a {
   0%,
   100% {
-    transform: scaleY(calc(0.16 + 0.22 * var(--orb-level)));
+    clip-path: inset(calc(50% - var(--eq-lo)) 0 round 999px);
+  }
+  30% {
+    clip-path: inset(calc(50% - var(--eq-hi)) 0 round 999px);
+  }
+  55% {
+    clip-path: inset(calc(50% - var(--eq-mid)) 0 round 999px);
+  }
+  80% {
+    clip-path: inset(calc(50% - var(--eq-mh)) 0 round 999px);
+  }
+}
+
+@keyframes eq-b {
+  0%,
+  100% {
+    clip-path: inset(calc(50% - var(--eq-mid)) 0 round 999px);
+  }
+  30% {
+    clip-path: inset(calc(50% - var(--eq-lo)) 0 round 999px);
+  }
+  55% {
+    clip-path: inset(calc(50% - var(--eq-hi)) 0 round 999px);
+  }
+  78% {
+    clip-path: inset(calc(50% - var(--eq-lo)) 0 round 999px);
+  }
+}
+
+@keyframes eq-c {
+  0%,
+  100% {
+    clip-path: inset(calc(50% - var(--eq-lo)) 0 round 999px);
+  }
+  25% {
+    clip-path: inset(calc(50% - var(--eq-mid)) 0 round 999px);
+  }
+  52% {
+    clip-path: inset(calc(50% - var(--eq-lo)) 0 round 999px);
+  }
+  80% {
+    clip-path: inset(calc(50% - var(--eq-hi)) 0 round 999px);
+  }
+}
+
+@keyframes eq-wave {
+  0%,
+  100% {
+    clip-path: inset(calc(50% - var(--eq-lo)) 0 round 999px);
   }
   50% {
-    transform: scaleY(calc(0.28 + 1.5 * var(--orb-level)));
+    clip-path: inset(calc(50% - var(--eq-mh)) 0 round 999px);
+  }
+}
+
+@keyframes eq-connect {
+  0%,
+  26%,
+  100% {
+    clip-path: inset(calc(50% - var(--eq-dot)) 0 round 999px);
+  }
+  12% {
+    clip-path: inset(calc(50% - var(--eq-cn)) 0 round 999px);
+  }
+}
+
+@keyframes eq-y {
+  0%,
+  100% {
+    transform: scaleY(calc((0.12 + 0.12 * var(--orb-level)) * var(--bar-gain)));
+  }
+  50% {
+    transform: scaleY(calc((0.4 + 0.6 * var(--orb-level)) * var(--bar-gain)));
+  }
+}
+
+@keyframes eq-y-connect {
+  0%,
+  26%,
+  100% {
+    transform: scaleY(0.12);
+  }
+  12% {
+    transform: scaleY(calc(0.3 + 0.3 * var(--orb-level)));
+  }
+}
+
+@keyframes eq-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes eq-shake {
+  0%,
+  22%,
+  100% {
+    transform: translateX(0);
+  }
+  4% {
+    transform: translateX(-1.5px);
+  }
+  9% {
+    transform: translateX(1.5px);
+  }
+  14% {
+    transform: translateX(-1px);
+  }
+  18% {
+    transform: translateX(1px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .bar {
+  .orb[data-state] .disc,
+  .orb[data-state] .bars {
     animation: none;
-    transform: scaleY(calc(0.3 + 0.5 * var(--orb-level)));
+  }
+
+  .orb[data-state='listening'] .ring {
+    opacity: 0.55;
+    transform: scale(1);
   }
 }
