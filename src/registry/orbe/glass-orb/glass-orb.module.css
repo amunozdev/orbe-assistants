@@ -1,36 +1,103 @@
+@property --glass-from {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #a78bfa;
+}
+
+@property --glass-to {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #38bdf8;
+}
+
+@property --glass-breathe {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --glass-halo-base {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.72;
+}
+
+@property --glass-halo-gain {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.28;
+}
+
+@property --glass-halo-swell {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.14;
+}
+
+@property --glass-rim-base {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.85;
+}
+
+@property --glass-rim-gain {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
 .orb {
   --orb-size: 160px;
   --orb-speed: 1;
   --orb-color-from: #a78bfa;
   --orb-color-to: #38bdf8;
   --orb-level: 0;
-  --glass-blend: color-mix(in oklab, var(--orb-color-from), var(--orb-color-to) 50%);
+  --glass-from: var(--orb-color-from);
+  --glass-to: var(--orb-color-to);
+  --glass-breathe: 0;
+  --glass-halo-base: 0.72;
+  --glass-halo-gain: 0.28;
+  --glass-halo-swell: 0.14;
+  --glass-rim-base: 0.85;
+  --glass-rim-gain: 0;
+  --glass-blend: color-mix(in oklab, var(--glass-from), var(--glass-to) 50%);
   --glass-fill: light-dark(
     color-mix(in oklab, var(--glass-blend), transparent 62%),
     color-mix(in oklab, var(--glass-blend), transparent 86%)
   );
   --glass-edge: light-dark(
-    color-mix(in oklab, color-mix(in oklab, var(--orb-color-from), #171a2b 55%), transparent 35%),
+    color-mix(in oklab, color-mix(in oklab, var(--glass-from), #171a2b 55%), transparent 35%),
     color-mix(in oklab, #ffffff, transparent 66%)
   );
   --glass-depth: light-dark(
-    color-mix(in oklab, color-mix(in oklab, var(--orb-color-from), #10131f 42%), transparent 46%),
-    color-mix(in oklab, color-mix(in oklab, var(--orb-color-from), #05060c 52%), transparent 36%)
+    color-mix(in oklab, color-mix(in oklab, var(--glass-from), #10131f 42%), transparent 46%),
+    color-mix(in oklab, color-mix(in oklab, var(--glass-from), #05060c 52%), transparent 36%)
   );
   --glass-contact: light-dark(
-    color-mix(in oklab, color-mix(in oklab, var(--orb-color-from), #10131f 55%), transparent 50%),
+    color-mix(in oklab, color-mix(in oklab, var(--glass-from), #10131f 55%), transparent 50%),
     color-mix(in oklab, color-mix(in oklab, var(--glass-blend), #000000 40%), transparent 42%)
   );
   --glass-halo-tight: light-dark(color-mix(in oklab, var(--glass-blend), transparent 32%), transparent);
   --glass-halo-wide: light-dark(transparent, color-mix(in oklab, var(--glass-blend), transparent 42%));
-  --glass-caustic: color-mix(in oklab, color-mix(in oklab, var(--orb-color-to), #ffffff 55%), transparent 28%);
-  --glass-spec-counter: color-mix(in oklab, color-mix(in oklab, var(--orb-color-to), #ffffff 42%), transparent 70%);
+  --glass-caustic: color-mix(in oklab, color-mix(in oklab, var(--glass-to), #ffffff 55%), transparent 28%);
+  --glass-spec-counter: color-mix(in oklab, color-mix(in oklab, var(--glass-to), #ffffff 42%), transparent 70%);
   position: relative;
   display: grid;
   place-items: center;
   width: var(--orb-size);
   height: var(--orb-size);
   isolation: isolate;
+  transition:
+    --glass-from 0.4s ease,
+    --glass-to 0.4s ease,
+    --glass-breathe 0.45s ease,
+    --glass-halo-base 0.35s ease,
+    --glass-halo-gain 0.35s ease,
+    --glass-halo-swell 0.35s ease,
+    --glass-rim-base 0.35s ease,
+    --glass-rim-gain 0.35s ease,
+    opacity 0.3s ease,
+    filter 0.3s ease;
 }
 
 .halo {
@@ -40,8 +107,8 @@
   background:
     radial-gradient(closest-side, var(--glass-halo-tight) 18%, transparent 66%),
     radial-gradient(closest-side, var(--glass-halo-wide) 10%, transparent 96%);
-  opacity: calc(0.72 + 0.28 * var(--orb-level));
-  transform: scale(calc(1 + 0.14 * var(--orb-level)));
+  opacity: calc(var(--glass-halo-base) + var(--glass-halo-gain) * var(--orb-level));
+  transform: scale(calc(1 + var(--glass-halo-swell) * var(--orb-level)));
 }
 
 .aura {
@@ -50,12 +117,12 @@
   border-radius: 50%;
   background: conic-gradient(
     from 20deg,
-    var(--orb-color-from),
-    color-mix(in oklch, var(--orb-color-from), #ff3ea5 34%) 18%,
-    var(--orb-color-to) 42%,
-    color-mix(in oklch, var(--orb-color-to), #ffb54d 30%) 64%,
-    color-mix(in oklch, var(--orb-color-from), #ffffff 24%) 82%,
-    var(--orb-color-from)
+    var(--glass-from),
+    color-mix(in oklch, var(--glass-from), #ff3ea5 34%) 18%,
+    var(--glass-to) 42%,
+    color-mix(in oklch, var(--glass-to), #ffb54d 30%) 64%,
+    color-mix(in oklch, var(--glass-from), #ffffff 24%) 82%,
+    var(--glass-from)
   );
   filter: blur(14px);
   opacity: calc(0.62 + 0.38 * var(--orb-level));
@@ -74,8 +141,8 @@
     radial-gradient(85% 60% at 50% 112%, var(--glass-depth), transparent 74%),
     linear-gradient(
       148deg,
-      color-mix(in oklab, var(--orb-color-from), transparent 74%),
-      color-mix(in oklab, var(--orb-color-to), transparent 68%) 90%
+      color-mix(in oklab, var(--glass-from), transparent 74%),
+      color-mix(in oklab, var(--glass-to), transparent 68%) 90%
     );
   -webkit-backdrop-filter: blur(10px) saturate(1.5) brightness(1.05);
   backdrop-filter: blur(10px) saturate(1.5) brightness(1.05);
@@ -85,6 +152,7 @@
     inset 0 -12px 26px var(--glass-depth),
     0 16px 36px -14px var(--glass-contact);
   transform: scale(calc(1 + 0.045 * var(--orb-level)));
+  animation: glass-breathe calc(3.2s / var(--orb-speed)) ease-in-out infinite;
 }
 
 .sheen {
@@ -113,12 +181,12 @@
     from -70deg,
     transparent 0deg,
     rgba(255, 255, 255, 0.9) 42deg,
-    color-mix(in oklab, var(--orb-color-to), #ffffff 55%) 78deg,
+    color-mix(in oklab, var(--glass-to), #ffffff 55%) 78deg,
     transparent 148deg,
-    color-mix(in oklab, color-mix(in oklab, var(--orb-color-from), #ffffff 45%), transparent 45%) 208deg,
+    color-mix(in oklab, color-mix(in oklab, var(--glass-from), #ffffff 45%), transparent 45%) 208deg,
     transparent 268deg
   );
-  opacity: 0.85;
+  opacity: calc(var(--glass-rim-base) + var(--glass-rim-gain) * var(--orb-level));
   -webkit-mask: radial-gradient(
     closest-side,
     transparent calc(100% - 7px),
@@ -146,6 +214,7 @@
   animation: glass-shimmer calc(7s / var(--orb-speed)) ease-in-out infinite alternate;
 }
 
+.orbit,
 .counter {
   position: absolute;
   inset: 3%;
@@ -153,8 +222,8 @@
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    color-mix(in oklab, var(--orb-color-to), #ffffff 35%) 14deg,
-    color-mix(in oklab, var(--orb-color-from), #ffffff 20%) 46deg,
+    color-mix(in oklab, var(--glass-to), #ffffff 35%) 14deg,
+    color-mix(in oklab, var(--glass-from), #ffffff 20%) 46deg,
     transparent 60deg 360deg
   );
   opacity: 0;
@@ -173,8 +242,14 @@
     #000 calc(100% - 2px),
     transparent
   );
+}
+
+.orbit {
+  animation: glass-rotate calc(4.5s / var(--orb-speed)) linear infinite reverse;
+}
+
+.counter {
   animation: glass-rotate calc(2.6s / var(--orb-speed)) linear infinite reverse;
-  animation-play-state: paused;
 }
 
 .grain {
@@ -189,51 +264,38 @@
   mask: radial-gradient(closest-side, #000 55%, transparent 100%);
 }
 
-.orb[data-state='connecting'] .counter {
-  opacity: 0.55;
-  animation-play-state: running;
-  animation-duration: calc(4.5s / var(--orb-speed));
+.orb[data-state='connecting'] {
+  --glass-breathe: 1;
 }
 
-.orb[data-state='connecting'] .sphere {
-  animation: glass-breathe calc(3.2s / var(--orb-speed)) ease-in-out infinite;
+.orb[data-state='connecting'] .orbit {
+  opacity: 0.55;
 }
 
 .orb[data-state='thinking'] .counter {
   opacity: 1;
-  animation-play-state: running;
 }
 
-.orb[data-state='listening'] .halo {
-  opacity: calc(0.6 + 0.4 * var(--orb-level));
-  transform: scale(calc(1 + 0.2 * var(--orb-level)));
+.orb[data-state='listening'] {
+  --glass-halo-base: 0.6;
+  --glass-halo-gain: 0.4;
+  --glass-halo-swell: 0.2;
 }
 
-.orb[data-state='speaking'] .rim {
-  opacity: calc(0.7 + 0.45 * var(--orb-level));
+.orb[data-state='speaking'] {
+  --glass-rim-base: 0.7;
+  --glass-rim-gain: 0.45;
 }
 
 .orb[data-state='error'] {
-  --orb-color-from: #fb7185;
-  --orb-color-to: #f43f5e;
+  --glass-from: #fb7185;
+  --glass-to: #f43f5e;
   animation: glass-shake 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) 1;
-}
-
-.orb[data-state='error'] .aura,
-.orb[data-state='error'] .sheen {
-  animation-play-state: paused;
 }
 
 .orb[data-state='disabled'] {
   filter: grayscale(0.85);
   opacity: 0.5;
-}
-
-.orb[data-state='disabled'] .aura,
-.orb[data-state='disabled'] .sheen,
-.orb[data-state='disabled'] .spec,
-.orb[data-state='disabled'] .counter {
-  animation-play-state: paused;
 }
 
 @keyframes glass-rotate {
@@ -268,10 +330,10 @@
 @keyframes glass-breathe {
   0%,
   100% {
-    transform: scale(1);
+    scale: 1;
   }
   50% {
-    transform: scale(1.035);
+    scale: calc(1 + 0.035 * var(--glass-breathe));
   }
 }
 
@@ -296,10 +358,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .orb,
+  .orb[data-state='error'],
   .aura,
   .sphere,
   .sheen,
   .spec,
+  .orbit,
   .counter {
     animation: none;
   }
@@ -309,7 +373,7 @@
   .orb {
     --glass-fill: color-mix(in oklab, var(--glass-blend), transparent 86%);
     --glass-edge: color-mix(in oklab, #ffffff, transparent 66%);
-    --glass-depth: color-mix(in oklab, color-mix(in oklab, var(--orb-color-from), #05060c 52%), transparent 36%);
+    --glass-depth: color-mix(in oklab, color-mix(in oklab, var(--glass-from), #05060c 52%), transparent 36%);
     --glass-contact: color-mix(in oklab, color-mix(in oklab, var(--glass-blend), #000000 40%), transparent 42%);
     --glass-halo-tight: transparent;
     --glass-halo-wide: color-mix(in oklab, var(--glass-blend), transparent 42%);
@@ -318,9 +382,9 @@
   @media (prefers-color-scheme: light) {
     .orb {
       --glass-fill: color-mix(in oklab, var(--glass-blend), transparent 62%);
-      --glass-edge: color-mix(in oklab, color-mix(in oklab, var(--orb-color-from), #171a2b 55%), transparent 35%);
-      --glass-depth: color-mix(in oklab, color-mix(in oklab, var(--orb-color-from), #10131f 42%), transparent 46%);
-      --glass-contact: color-mix(in oklab, color-mix(in oklab, var(--orb-color-from), #10131f 55%), transparent 50%);
+      --glass-edge: color-mix(in oklab, color-mix(in oklab, var(--glass-from), #171a2b 55%), transparent 35%);
+      --glass-depth: color-mix(in oklab, color-mix(in oklab, var(--glass-from), #10131f 42%), transparent 46%);
+      --glass-contact: color-mix(in oklab, color-mix(in oklab, var(--glass-from), #10131f 55%), transparent 50%);
       --glass-halo-tight: color-mix(in oklab, var(--glass-blend), transparent 32%);
       --glass-halo-wide: transparent;
     }
