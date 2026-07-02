@@ -1,8 +1,19 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { approach, orbVars, stateEnergy, type OrbProps } from '../../lib/orb-state';
+import { useCallback, useEffect, useRef } from 'react';
+import { approach, orbVars, stateEnergy, type OrbProps, type OrbState } from '../../lib/orb-state';
+import { observeActivity } from '../../lib/use-in-view';
 import styles from './glass-orb.module.css';
+
+const REDUCED_LEVELS: Record<OrbState, number> = {
+  idle: 0,
+  connecting: 0.22,
+  listening: 0.7,
+  thinking: 0.4,
+  speaking: 0.55,
+  error: 0.2,
+  disabled: 0,
+};
 
 export const GlassOrb = ({
   state = 'idle',
@@ -13,24 +24,39 @@ export const GlassOrb = ({
   levelRef,
   label = 'Assistant orb',
   className,
+  ref,
 }: OrbProps) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(state);
+
+  const setRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      innerRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref],
+  );
 
   useEffect(() => {
     stateRef.current = state;
   });
 
   useEffect(() => {
-    const el = ref.current;
+    const el = innerRef.current;
+    if (!el) return;
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    el.style.setProperty('--orb-level', REDUCED_LEVELS[state].toFixed(3));
+  }, [state]);
+
+  useEffect(() => {
+    const el = innerRef.current;
     if (!el) return;
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      el.style.setProperty('--orb-level', '0');
-      return;
-    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     let raf = 0;
+    let running = false;
     let start: number | null = null;
     let last: number | null = null;
     let smoothed = 0;
@@ -48,13 +74,28 @@ export const GlassOrb = ({
       raf = requestAnimationFrame(frame);
     };
 
-    raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    const setActive = (active: boolean) => {
+      if (active === running) return;
+      running = active;
+      if (active) {
+        last = null;
+        raf = requestAnimationFrame(frame);
+      } else {
+        cancelAnimationFrame(raf);
+      }
+    };
+
+    setActive(true);
+    const unobserve = observeActivity(el, setActive);
+    return () => {
+      unobserve();
+      cancelAnimationFrame(raf);
+    };
   }, [levelRef]);
 
   return (
     <div
-      ref={ref}
+      ref={setRef}
       role="img"
       aria-label={label}
       data-state={state}
