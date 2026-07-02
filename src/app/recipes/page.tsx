@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const RecipesPage = () => (
-  <main className="mx-auto max-w-5xl px-5 py-16">
+  <main className="mx-auto max-w-5xl px-4 py-10 sm:px-5 sm:py-16">
     <header className="mb-12 max-w-2xl">
       <Link
         href="/"
@@ -18,7 +18,7 @@ const RecipesPage = () => (
       >
         &larr; Back to the gallery
       </Link>
-      <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl">
+      <h1 className="text-balance text-3xl font-bold tracking-tight sm:text-5xl">
         Integration recipes
       </h1>
       <p className="mt-4 text-pretty text-base text-muted">

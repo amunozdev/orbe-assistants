@@ -101,8 +101,8 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
   });
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-16">
-      <nav aria-label="Breadcrumb" className="mb-8 flex items-center gap-3 text-sm text-muted">
+    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-5 sm:py-16">
+      <nav aria-label="Breadcrumb" className="mb-8 flex flex-wrap items-center gap-3 text-sm text-muted">
         <Link href="/" className="transition-colors hover:text-accent-foreground">
           ← All orbs
         </Link>
@@ -117,7 +117,7 @@ const Page = async ({ params }: { params: Promise<{ id: string }> }) => {
           {orb.tech}
           {orb.dependencies.length === 0 ? ' · zero deps' : ''}
         </p>
-        <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl">{orb.name}</h1>
+        <h1 className="text-balance text-3xl font-bold tracking-tight sm:text-5xl">{orb.name}</h1>
         <p className="mt-4 text-pretty text-base text-muted">{orb.tagline}</p>
       </header>
 
