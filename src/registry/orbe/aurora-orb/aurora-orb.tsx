@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { orbVars, type OrbProps } from '../../lib/orb-state';
 import { useOrbLevel } from '../../lib/use-orb-level';
 import styles from './aurora-orb.module.css';
@@ -14,13 +14,22 @@ export const AuroraOrb = ({
   levelRef,
   label = 'Assistant orb',
   className,
+  ref,
 }: OrbProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useOrbLevel(ref, state, levelRef);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const setRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      innerRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref],
+  );
+  useOrbLevel(innerRef, state, levelRef);
 
   return (
     <div
-      ref={ref}
+      ref={setRef}
       role="img"
       aria-label={label}
       data-state={state}
@@ -30,9 +39,15 @@ export const AuroraOrb = ({
       <span className={styles.halo} />
       <span className={styles.sky}>
         <span className={styles.stars} />
-        <span className={`${styles.veil} ${styles.veilBack}`} />
-        <span className={`${styles.veil} ${styles.veilMid}`} />
-        <span className={`${styles.veil} ${styles.veilFront}`} />
+        <span className={`${styles.veil} ${styles.veilBack}`}>
+          <span className={`${styles.drift} ${styles.driftBack}`} />
+        </span>
+        <span className={`${styles.veil} ${styles.veilMid}`}>
+          <span className={`${styles.drift} ${styles.driftMid}`} />
+        </span>
+        <span className={`${styles.veil} ${styles.veilFront}`}>
+          <span className={`${styles.drift} ${styles.driftFront}`} />
+        </span>
         <span className={styles.film} />
       </span>
     </div>

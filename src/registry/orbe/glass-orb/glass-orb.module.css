@@ -367,6 +367,10 @@
   .counter {
     animation: none;
   }
+
+  .counter {
+    transform: rotate(180deg);
+  }
 }
 
 @supports not (color: light-dark(#000, #fff)) {

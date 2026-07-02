@@ -1,38 +1,29 @@
-import { promises as fs } from 'fs';
-import path from 'path';
-import { orbs, SHARED_FILES } from '@/registry/registry';
-import { buildAiPrompt, type FileWithCode } from '@/registry/prompt';
+import { orbs } from '@/registry/registry';
+import { readAdapterFiles, readOrbFiles, readSharedFiles } from '@/registry/read-files';
 import { Gallery } from '@/components/gallery';
 import type { OrbCardData } from '@/components/orb-card';
 
-const read = async (file: { label: string; path: string; lang: string }): Promise<FileWithCode> => ({
-  ...file,
-  code: await fs.readFile(path.join(process.cwd(), file.path), 'utf8'),
-});
-
-const getOrbs = async (): Promise<OrbCardData[]> => {
-  const shared = await Promise.all(SHARED_FILES.map(read));
-  return Promise.all(
-    orbs.map(async (orb) => {
-      const files = await Promise.all(orb.files.map(read));
-      return {
-        id: orb.id,
-        name: orb.name,
-        tagline: orb.tagline,
-        tech: orb.tech,
-        dependencies: orb.dependencies,
-        defaultColorFrom: orb.defaultColorFrom,
-        defaultColorTo: orb.defaultColorTo,
-        defaultSize: orb.defaultSize,
-        files,
-        aiPrompt: buildAiPrompt(orb.name, orb.dependencies, files, shared),
-      };
-    }),
+const getOrbs = (): Promise<OrbCardData[]> =>
+  Promise.all(
+    orbs.map(async (orb) => ({
+      id: orb.id,
+      name: orb.name,
+      tagline: orb.tagline,
+      tech: orb.tech,
+      dependencies: orb.dependencies,
+      defaultColorFrom: orb.defaultColorFrom,
+      defaultColorTo: orb.defaultColorTo,
+      defaultSize: orb.defaultSize,
+      files: await readOrbFiles(orb),
+    })),
   );
-};
 
 const Page = async () => {
-  const data = await getOrbs();
+  const [data, shared, adapters] = await Promise.all([
+    getOrbs(),
+    readSharedFiles(),
+    readAdapterFiles(),
+  ]);
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-16">
@@ -50,7 +41,7 @@ const Page = async () => {
         </p>
       </header>
 
-      <Gallery orbs={data} />
+      <Gallery orbs={data} shared={shared} adapters={adapters} />
     </main>
   );
 };

@@ -1,0 +1,255 @@
+@property --edge-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@property --edge-from {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f472b6;
+}
+
+@property --edge-to {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #60a5fa;
+}
+
+.frame {
+  --orb-size: 168px;
+  --orb-speed: 1;
+  --orb-color-from: #f472b6;
+  --orb-color-to: #60a5fa;
+  --orb-level: 0;
+  --edge-from: var(--orb-color-from);
+  --edge-to: var(--orb-color-to);
+  --edge-width: clamp(1.5px, calc(var(--orb-size) * 0.014), 3px);
+  --edge-radius: 24px;
+  --edge-inset: 4px;
+  --edge-spin: 14;
+  --edge-glow: 0.3;
+  --edge-line: 0.5;
+  --edge-boost: 0;
+  position: relative;
+  border-radius: var(--edge-radius);
+  isolation: isolate;
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease,
+    --edge-from 0.35s ease,
+    --edge-to 0.35s ease;
+}
+
+.frame[data-state='connecting'] {
+  --edge-glow: 0.22;
+  --edge-line: 0.35;
+}
+
+.frame[data-state='listening'] {
+  --edge-spin: 9;
+  --edge-glow: 0.42;
+  --edge-line: 0.62;
+  --edge-boost: 1;
+}
+
+.frame[data-state='thinking'] {
+  --edge-glow: 0.34;
+}
+
+.frame[data-state='speaking'] {
+  --edge-spin: 3;
+  --edge-glow: 0.52;
+  --edge-line: 0.72;
+  --edge-boost: 1;
+}
+
+.frame[data-state='error'] {
+  --edge-spin: 8;
+  --edge-glow: 0.48;
+  --edge-line: 0.75;
+}
+
+.frame[data-state='disabled'] {
+  filter: grayscale(0.85);
+  opacity: 0.55;
+}
+
+.aura,
+.band,
+.sweep,
+.chase {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  padding: var(--edge-width);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  transition: opacity 0.35s ease;
+}
+
+.aura {
+  padding: calc(var(--edge-width) * 3);
+  background: conic-gradient(
+    from var(--edge-angle) in oklab,
+    var(--edge-from),
+    var(--edge-to),
+    var(--edge-from)
+  );
+  filter: blur(9px) brightness(calc(1 + 0.7 * var(--orb-level) * var(--edge-boost)));
+  opacity: calc(var(--edge-glow) + 0.45 * var(--orb-level) * var(--edge-boost));
+  animation: edgeSpin calc(var(--edge-spin) * 1s / var(--orb-speed)) linear infinite;
+}
+
+.band {
+  background: conic-gradient(
+    from var(--edge-angle) in oklab,
+    var(--edge-from),
+    var(--edge-to),
+    var(--edge-from)
+  );
+  opacity: calc(var(--edge-line) + 0.32 * var(--orb-level) * var(--edge-boost));
+  animation: edgeSpin calc(var(--edge-spin) * 1s / var(--orb-speed)) linear infinite;
+}
+
+.sweep {
+  background: conic-gradient(
+    from var(--edge-angle) in oklab,
+    var(--edge-from) 0deg,
+    transparent 85deg,
+    transparent 160deg,
+    var(--edge-to) 180deg,
+    transparent 265deg,
+    transparent 340deg,
+    var(--edge-from) 360deg
+  );
+  opacity: 0;
+  animation: edgeSpin calc(7s / var(--orb-speed)) linear infinite;
+}
+
+.chase {
+  background: conic-gradient(
+    from var(--edge-angle),
+    transparent 0deg,
+    transparent 220deg,
+    color-mix(in oklab, var(--edge-from), transparent 70%) 280deg,
+    color-mix(in oklab, var(--edge-from) 35%, var(--edge-to)) 330deg,
+    var(--edge-to) 352deg,
+    transparent 356deg
+  );
+  opacity: 0;
+  animation: edgeSpin calc(1.4s / var(--orb-speed)) linear infinite;
+}
+
+.frame:is([data-state='connecting'], [data-state='thinking']) .band {
+  opacity: 0;
+}
+
+.frame[data-state='connecting'] .chase {
+  opacity: 1;
+}
+
+.frame[data-state='thinking'] .sweep {
+  opacity: 0.9;
+}
+
+.frame[data-state='error'] .aura {
+  animation:
+    edgeSpin calc(var(--edge-spin) * 1s / var(--orb-speed)) linear infinite,
+    edgeThrob calc(1.3s / var(--orb-speed)) ease-in-out infinite;
+}
+
+.frame[data-state='disabled'] .aura,
+.frame[data-state='disabled'] .sweep,
+.frame[data-state='disabled'] .chase {
+  opacity: 0;
+}
+
+.frame[data-state='disabled'] .band {
+  padding: 1px;
+  opacity: 0.5;
+  animation-play-state: paused;
+}
+
+.content {
+  position: absolute;
+  inset: var(--edge-inset);
+  border-radius: calc(var(--edge-radius) - var(--edge-inset));
+  overflow: hidden;
+}
+
+.demo {
+  display: grid;
+  place-items: center;
+  background: light-dark(rgb(255 255 255 / 0.72), rgb(10 12 20 / 0.78));
+}
+
+.demoLabel {
+  font-size: clamp(11px, calc(var(--orb-size) * 0.085), 17px);
+  letter-spacing: 0.02em;
+  color: light-dark(rgb(30 41 59 / 0.75), rgb(226 232 240 / 0.8));
+}
+
+@keyframes edgeSpin {
+  to {
+    --edge-angle: 360deg;
+  }
+}
+
+@keyframes edgeThrob {
+  50% {
+    filter: blur(9px) brightness(1.55);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aura,
+  .band,
+  .sweep,
+  .chase {
+    animation: none;
+  }
+
+  .frame[data-state='idle'] .band {
+    opacity: 0.4;
+  }
+
+  .frame[data-state='idle'] .aura {
+    opacity: 0.22;
+  }
+
+  .frame[data-state='listening'] .band {
+    opacity: 0.85;
+  }
+
+  .frame[data-state='listening'] .aura {
+    opacity: 0.55;
+  }
+
+  .frame[data-state='speaking'] .band {
+    opacity: 1;
+  }
+
+  .frame[data-state='speaking'] .aura {
+    opacity: 0.8;
+  }
+
+  .frame[data-state='thinking'] .sweep {
+    opacity: 0.95;
+  }
+
+  .frame[data-state='connecting'] .chase {
+    opacity: 1;
+  }
+
+  .frame[data-state='error'] .band {
+    opacity: 0.9;
+  }
+}

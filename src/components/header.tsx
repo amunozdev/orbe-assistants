@@ -13,6 +13,12 @@ export const Header = () => (
         Orbe Assistants
       </Link>
       <div className="flex items-center gap-2.5">
+        <Link
+          href="/recipes"
+          className="rounded-md px-2 py-1 text-sm text-muted transition-colors hover:text-foreground"
+        >
+          Recipes
+        </Link>
         <GitHubStars />
         <ThemeToggle />
       </div>

@@ -1,8 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import type { CSSProperties } from 'react';
 import { MeshGradient } from '@paper-design/shaders-react';
-import { approach, orbVars, stateEnergy, type OrbProps, type OrbState } from '../../lib/orb-state';
+import {
+  approach,
+  ERROR_COLOR_FROM,
+  ERROR_COLOR_TO,
+  hexToRgb,
+  orbVars,
+  stateEnergy,
+  type OrbProps,
+  type OrbState,
+} from '../../lib/orb-state';
+import { observeActivity } from '../../lib/use-in-view';
+import { useWebGLSupport } from '../../lib/use-webgl-support';
 
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
@@ -18,19 +30,6 @@ const useReducedMotion = () =>
     () => window.matchMedia(REDUCED_MOTION_QUERY).matches,
     () => false,
   );
-
-const hexToRgb = (hex: string): [number, number, number] => {
-  const clean = hex.replace('#', '');
-  const full =
-    clean.length === 3
-      ? clean
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : clean;
-  const n = Number.parseInt(full, 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-};
 
 const mixHex = (a: string, b: string, t: number): string => {
   const [ar, ag, ab] = hexToRgb(a);
@@ -53,9 +52,7 @@ const brandPalette = (from: string, to: string): string[] => [
   tint(to, 0.35),
 ];
 
-const ERROR_FROM = '#fb7185';
-const ERROR_TO = '#f43f5e';
-const ERROR_PALETTE = brandPalette(ERROR_FROM, ERROR_TO);
+const ERROR_PALETTE = brandPalette(ERROR_COLOR_FROM, ERROR_COLOR_TO);
 
 const GL_ATTRIBUTES: WebGLContextAttributes = {
   antialias: true,
@@ -70,6 +67,7 @@ const MOTION_RATE = 6;
 const SPEED_RATE = 5;
 const GRAIN_RATE = 6;
 const ERROR_RATE = 6;
+const STATIC_PHASE = 0.9;
 
 const speedFor = (s: OrbState) =>
   s === 'error'
@@ -155,13 +153,26 @@ export const PlasmaOrb = ({
   levelRef,
   label = 'Assistant orb',
   className,
+  ref,
 }: OrbProps) => {
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const sphereRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(state);
   const speedRef = useRef(speed);
   const reduced = useReducedMotion();
+  const webgl = useWebGLSupport();
+  const showShader = webgl === true;
   const [motion, setMotion] = useState<OrbMotion>(() => motionSeed(state, speed));
   const accRef = useRef<OrbMotion | null>(null);
+
+  const setRootRef = (node: HTMLDivElement | null) => {
+    rootRef.current = node;
+    if (typeof ref === 'function') {
+      ref(node);
+    } else if (ref) {
+      ref.current = node;
+    }
+  };
 
   useEffect(() => {
     stateRef.current = state;
@@ -170,24 +181,32 @@ export const PlasmaOrb = ({
 
   useEffect(() => {
     if (reduced) return;
+    const root = rootRef.current;
+    if (!root) return;
     if (accRef.current === null) {
       accRef.current = motionSeed(stateRef.current, speedRef.current);
     }
     const acc = accRef.current;
     let raf = 0;
-    let start: number | null = null;
     let prev: number | null = null;
+    let clock = 0;
     let lastPush = 0;
+    let active = true;
     const frame = (now: number) => {
-      if (start === null) start = now;
+      raf = 0;
       const dt = Math.min(MAX_DT, prev === null ? 1 / 60 : (now - prev) / 1000);
       prev = now;
       const current = stateRef.current;
       const multiplier = speedRef.current;
-      const t = ((now - start) / 1000) * multiplier;
+      clock += dt * multiplier;
       const live = levelRef?.current;
       const hasLive = typeof live === 'number' && live >= 0;
-      acc.energy = approach(acc.energy, hasLive ? live : stateEnergy(current, t), ENERGY_RATE, dt);
+      acc.energy = approach(
+        acc.energy,
+        hasLive ? live : stateEnergy(current, clock),
+        ENERGY_RATE,
+        dt,
+      );
       const target = motionFor(current, acc.energy);
       acc.distortion = approach(acc.distortion, target.distortion, MOTION_RATE, dt);
       acc.swirl = approach(acc.swirl, target.swirl, MOTION_RATE, dt);
@@ -199,7 +218,8 @@ export const PlasmaOrb = ({
       );
       acc.grain = approach(acc.grain, grainFor(current), GRAIN_RATE, dt);
       acc.errorMix = approach(acc.errorMix, current === 'error' ? 1 : 0, ERROR_RATE, dt);
-      if (now - lastPush > PUSH_INTERVAL_MS) {
+      root.style.setProperty('--orb-level', acc.energy.toFixed(3));
+      if (showShader && now - lastPush > PUSH_INTERVAL_MS) {
         lastPush = now;
         const next: OrbMotion = {
           energy: quantize(acc.energy, 50),
@@ -211,11 +231,32 @@ export const PlasmaOrb = ({
         };
         setMotion((prevMotion) => (sameMotion(prevMotion, next) ? prevMotion : next));
       }
-      raf = requestAnimationFrame(frame);
+      if (active) raf = requestAnimationFrame(frame);
     };
-    raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
-  }, [levelRef, reduced]);
+    const wake = () => {
+      if (raf === 0) {
+        prev = null;
+        raf = requestAnimationFrame(frame);
+      }
+    };
+    const halt = () => {
+      if (raf !== 0) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+      prev = null;
+    };
+    const unobserve = observeActivity(root, (next) => {
+      active = next;
+      if (next) wake();
+      else halt();
+    });
+    wake();
+    return () => {
+      halt();
+      unobserve();
+    };
+  }, [levelRef, reduced, showShader]);
 
   useEffect(() => {
     if (state !== 'error' || reduced) return;
@@ -235,41 +276,57 @@ export const PlasmaOrb = ({
     return () => shake.cancel();
   }, [state, reduced]);
 
+  const staticLevel = stateEnergy(state, STATIC_PHASE);
   const view: OrbMotion = reduced
     ? {
-        energy: 0,
-        ...motionFor(state, 0),
+        energy: staticLevel,
+        ...motionFor(state, staticLevel),
         shaderSpeed: 0,
         grain: grainFor(state),
         errorMix: state === 'error' ? 1 : 0,
       }
     : motion;
-  const { errorMix } = view;
+  const errorMix = showShader ? view.errorMix : state === 'error' ? 1 : 0;
   const from =
-    errorMix >= 1 ? ERROR_FROM : errorMix <= 0 ? colorFrom : mixHex(colorFrom, ERROR_FROM, errorMix);
-  const to = errorMix >= 1 ? ERROR_TO : errorMix <= 0 ? colorTo : mixHex(colorTo, ERROR_TO, errorMix);
-  const brandColors = useMemo(() => brandPalette(colorFrom, colorTo), [colorFrom, colorTo]);
-  const colors = useMemo(() => {
-    if (errorMix >= 1) return ERROR_PALETTE;
-    if (errorMix <= 0) return brandColors;
-    return brandColors.map((stop, index) => mixHex(stop, ERROR_PALETTE[index], errorMix));
-  }, [brandColors, errorMix]);
+    errorMix >= 1
+      ? ERROR_COLOR_FROM
+      : errorMix <= 0
+        ? colorFrom
+        : mixHex(colorFrom, ERROR_COLOR_FROM, errorMix);
+  const to =
+    errorMix >= 1
+      ? ERROR_COLOR_TO
+      : errorMix <= 0
+        ? colorTo
+        : mixHex(colorTo, ERROR_COLOR_TO, errorMix);
+  const brandColors = brandPalette(colorFrom, colorTo);
+  const colors =
+    errorMix >= 1
+      ? ERROR_PALETTE
+      : errorMix <= 0
+        ? brandColors
+        : brandColors.map((stop, index) => mixHex(stop, ERROR_PALETTE[index], errorMix));
+  const fallbackBase = `radial-gradient(circle at 50% 40%, ${tint(from, 0.12)}, ${mixHex(from, to, 0.55)} 55%, ${shade(to, 0.35)} 100%)`;
+  const fallbackGlow = `radial-gradient(circle at 32% 26%, ${tint(to, 0.45)}, transparent 55%), radial-gradient(circle at 66% 72%, ${tint(from, 0.2)}, transparent 62%)`;
 
   return (
     <div
+      ref={setRootRef}
       role="img"
       aria-label={label}
       data-state={state}
       className={className}
       style={{
         ...orbVars({ size, speed, colorFrom, colorTo }),
+        ...(reduced ? ({ '--orb-level': staticLevel.toFixed(3) } as CSSProperties) : null),
         width: size,
         height: size,
         position: 'relative',
         borderRadius: '50%',
         opacity: state === 'disabled' ? 0.5 : 1,
         filter: state === 'disabled' ? 'grayscale(0.85)' : 'grayscale(0)',
-        transform: `scale(${(1 + view.energy * 0.06).toFixed(4)})`,
+        transform: showShader ? `scale(${(1 + view.energy * 0.06).toFixed(4)})` : undefined,
+        scale: showShader ? undefined : 'calc(1 + var(--orb-level, 0) * 0.06)',
         transition: 'transform 0.2s ease-out, opacity 0.3s ease-out, filter 0.3s ease-out',
       }}
     >
@@ -279,9 +336,12 @@ export const PlasmaOrb = ({
           inset: 0,
           borderRadius: '50%',
           boxShadow: `0 ${-size * 0.06}px ${size * 0.3}px color-mix(in oklab, ${from} 55%, transparent), 0 ${size * 0.06}px ${size * 0.3}px color-mix(in oklab, ${to} 55%, transparent)`,
-          opacity: Math.min(1, 0.35 + view.energy * 0.65),
-          transform: `scale(${(1 + view.energy * 0.08).toFixed(4)})`,
-          transition: 'opacity 0.2s ease-out, transform 0.2s ease-out',
+          opacity: showShader
+            ? Math.min(1, 0.35 + view.energy * 0.65)
+            : 'calc(0.35 + var(--orb-level, 0) * 0.6)',
+          transform: showShader ? `scale(${(1 + view.energy * 0.08).toFixed(4)})` : undefined,
+          scale: showShader ? undefined : 'calc(1 + var(--orb-level, 0) * 0.08)',
+          transition: showShader ? 'opacity 0.2s ease-out, transform 0.2s ease-out' : undefined,
         }}
       />
       <div
@@ -294,20 +354,42 @@ export const PlasmaOrb = ({
           boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${from} 45%, transparent), 0 0 0 1px rgba(255,255,255,0.08)`,
         }}
       >
-        <MeshGradient
-          width={size}
-          height={size}
-          colors={colors}
-          distortion={view.distortion}
-          swirl={view.swirl}
-          scale={1.15}
-          speed={view.shaderSpeed}
-          frame={BASE_FRAME}
-          grainMixer={view.grain}
-          grainOverlay={0.05}
-          minPixelRatio={2}
-          webGlContextAttributes={GL_ATTRIBUTES}
-        />
+        {showShader ? (
+          <MeshGradient
+            width={size}
+            height={size}
+            colors={colors}
+            distortion={view.distortion}
+            swirl={view.swirl}
+            scale={1.15}
+            speed={view.shaderSpeed}
+            frame={BASE_FRAME}
+            grainMixer={view.grain}
+            grainOverlay={0.05}
+            minPixelRatio={2}
+            webGlContextAttributes={GL_ATTRIBUTES}
+          />
+        ) : (
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              backgroundImage: fallbackBase,
+            }}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '50%',
+                backgroundImage: fallbackGlow,
+                opacity: 'calc(0.25 + var(--orb-level, 0) * 0.75)',
+              }}
+            />
+          </div>
+        )}
         <div
           style={{
             position: 'absolute',

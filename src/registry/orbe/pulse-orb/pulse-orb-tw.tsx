@@ -1,9 +1,9 @@
 'use client';
 
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import type { CSSProperties } from 'react';
 import clsx from 'clsx';
-import { orbVars, type OrbProps } from '../../lib/orb-state';
+import { ERROR_COLOR_FROM, ERROR_COLOR_TO, orbVars, type OrbProps } from '../../lib/orb-state';
 import { useOrbLevel } from '../../lib/use-orb-level';
 
 const RINGS = [
@@ -47,7 +47,7 @@ const PULSE_TW_CSS = `
 [data-pulse-orb-tw][data-state='idle'] { --ptw-breathe-idle: 1; }
 [data-pulse-orb-tw][data-state='thinking'] { --ptw-breathe-think: 1; }
 [data-pulse-orb-tw][data-state='connecting'] { --ptw-glow: 0.6; }
-[data-pulse-orb-tw][data-state='error'] { --ptw-from: #fb7185; --ptw-to: #f43f5e; --ptw-blink: 1; }
+[data-pulse-orb-tw][data-state='error'] { --ptw-from: ${ERROR_COLOR_FROM}; --ptw-to: ${ERROR_COLOR_TO}; --ptw-blink: 1; }
 [data-pulse-orb-tw][data-state='disabled'] { --ptw-glow: 0.4; filter: grayscale(0.8); opacity: 0.5; }
 [data-pulse-orb-tw] [data-glow] {
   background:
@@ -117,13 +117,17 @@ const PULSE_TW_CSS = `
 @media (prefers-reduced-motion: reduce) {
   [data-pulse-orb-tw],
   [data-pulse-orb-tw] * { animation: none !important; }
-  [data-pulse-orb-tw][data-state='idle'] [data-ring-set='idle'],
   [data-pulse-orb-tw][data-state='listening'] [data-ring-set='listen'],
   [data-pulse-orb-tw][data-state='speaking'] [data-ring-set='speak'] { opacity: 1; }
+  [data-pulse-orb-tw][data-state='idle'] [data-ring-set='idle'] { opacity: 0.5; }
   [data-pulse-orb-tw] [data-ring='1'] { transform: scale(1.2); opacity: 0.3; }
   [data-pulse-orb-tw] [data-ring='2'] { transform: scale(1.5); opacity: 0.2; }
   [data-pulse-orb-tw] [data-ring='3'] { transform: scale(1.8); opacity: 0.1; }
-  [data-pulse-orb-tw]:is([data-state='connecting'], [data-state='thinking']) [data-arc] { opacity: 0.6; }
+  [data-pulse-orb-tw][data-state='speaking'] [data-ring='1'] { transform: scale(1.35); opacity: 0.5; }
+  [data-pulse-orb-tw][data-state='speaking'] [data-ring='2'] { transform: scale(1.7); opacity: 0.34; }
+  [data-pulse-orb-tw][data-state='speaking'] [data-ring='3'] { transform: scale(2.05); opacity: 0.18; }
+  [data-pulse-orb-tw][data-state='connecting'] [data-arc] { opacity: 0.45; }
+  [data-pulse-orb-tw][data-state='thinking'] [data-arc] { opacity: 0.9; }
 }
 `;
 
@@ -136,13 +140,22 @@ export const PulseOrbTw = ({
   levelRef,
   label = 'Assistant orb',
   className,
+  ref,
 }: OrbProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useOrbLevel(ref, state, levelRef);
+  const internalRef = useRef<HTMLDivElement | null>(null);
+  useOrbLevel(internalRef, state, levelRef);
+  const setRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      internalRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref],
+  );
 
   return (
     <div
-      ref={ref}
+      ref={setRef}
       role="img"
       aria-label={label}
       data-state={state}

@@ -9,17 +9,19 @@ interface CopyButtonProps {
   className?: string;
 }
 
+type CopyStatus = 'idle' | 'copied' | 'failed';
+
 export const CopyButton = ({ value, label = 'Copy', className }: CopyButtonProps) => {
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<CopyStatus>('idle');
 
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(value);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
+      setStatus('copied');
     } catch {
-      setCopied(false);
+      setStatus('failed');
     }
+    window.setTimeout(() => setStatus('idle'), 1600);
   };
 
   return (
@@ -31,7 +33,10 @@ export const CopyButton = ({ value, label = 'Copy', className }: CopyButtonProps
         className,
       )}
     >
-      {copied ? '✓ Copied' : label}
+      {status === 'idle' && label}
+      <span role="status" aria-live="polite">
+        {status === 'copied' ? '✓ Copied' : status === 'failed' ? 'Copy failed' : null}
+      </span>
     </button>
   );
 };

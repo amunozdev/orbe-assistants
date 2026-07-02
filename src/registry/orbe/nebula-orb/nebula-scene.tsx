@@ -8,9 +8,12 @@ import {
   approach,
   createStateMix,
   stateEnergy,
+  ERROR_COLOR_FROM,
+  ERROR_COLOR_TO,
   type OrbState,
   type StateMix,
 } from '../../lib/orb-state';
+import { observeActivity } from '../../lib/use-in-view';
 
 const noiseGLSL = /* glsl */ `
 vec4 permute(vec4 x){ return mod(((x*34.0)+1.0)*x, 289.0); }
@@ -264,8 +267,8 @@ const Sphere = ({ state, speed, colorFrom, colorTo, reduced, levelRef }: SphereP
   const palette = useRef({
     from: new THREE.Color(colorFrom),
     to: new THREE.Color(colorTo),
-    errorFrom: new THREE.Color('#fb7185'),
-    errorTo: new THREE.Color('#f43f5e'),
+    errorFrom: new THREE.Color(ERROR_COLOR_FROM),
+    errorTo: new THREE.Color(ERROR_COLOR_TO),
   });
 
   const uniforms = useMemo(
@@ -374,23 +377,7 @@ export const NebulaScene = ({ state, speed, colorFrom, colorTo, levelRef }: Nebu
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    let inView = true;
-    let pageVisible = document.visibilityState === 'visible';
-    const sync = () => setActive(inView && pageVisible);
-    const observer = new IntersectionObserver((entries) => {
-      inView = entries[0]?.isIntersecting ?? true;
-      sync();
-    });
-    observer.observe(canvas);
-    const onVisibility = () => {
-      pageVisible = document.visibilityState === 'visible';
-      sync();
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      observer.disconnect();
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
+    return observeActivity(canvas, setActive);
   }, []);
 
   return (

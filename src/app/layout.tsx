@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeColorSync } from "@/components/theme-color-sync";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 
@@ -15,16 +16,53 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = "https://orbe-assistants.vercel.app";
+const siteName = "Orbe Assistants";
+const siteTitle = "Orbe Assistants | Animated orbs for AI assistants";
+const siteDescription =
+  "Open-source copy-paste gallery of animated orbs for conversational AI assistants.";
+
 export const metadata: Metadata = {
-  title: "Orbe Assistants | Animated orbs for AI assistants",
-  description: "Open-source copy-paste gallery of animated orbs for conversational AI assistants.",
+  metadataBase: new URL(siteUrl),
+  title: siteTitle,
+  description: siteDescription,
+  openGraph: {
+    title: siteTitle,
+    description: siteDescription,
+    url: siteUrl,
+    siteName,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteTitle,
+    description: siteDescription,
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: siteName,
+      url: siteUrl,
+      description: siteDescription,
+    },
+    {
+      "@type": "SoftwareSourceCode",
+      name: siteName,
+      url: siteUrl,
+      description: siteDescription,
+      codeRepository: "https://github.com/amunozdev/orbe-assistants",
+      license: "https://opensource.org/licenses/MIT",
+      programmingLanguage: "TypeScript",
+    },
+  ],
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f8fc" },
-    { media: "(prefers-color-scheme: dark)", color: "#06070d" },
-  ],
+  themeColor: "#f7f8fc",
 };
 
 export default function RootLayout({
@@ -39,12 +77,17 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >
+          <ThemeColorSync />
           <Header />
           {children}
           <Footer />

@@ -17,13 +17,13 @@ const toPrismLanguage = (lang: string): Language => {
 };
 
 export const CodeBlock = ({ files }: CodeBlockProps) => (
-  <Tabs.Root defaultValue={files[0]?.label} className="overflow-hidden rounded-lg border border-border bg-[#080a12]">
-    <Tabs.List className="flex flex-wrap gap-1 border-b border-border bg-panel px-2 py-1.5">
+  <Tabs.Root defaultValue={files[0]?.label} className="overflow-hidden rounded-lg border border-border bg-code">
+    <Tabs.List className="flex flex-wrap gap-1 border-b border-code-border bg-code-tab px-2 py-1.5">
       {files.map((file) => (
         <Tabs.Trigger
           key={file.label}
           value={file.label}
-          className="rounded-md px-2.5 py-1 text-xs text-muted transition-colors hover:text-foreground data-[state=active]:bg-[#080a12] data-[state=active]:text-accent-foreground"
+          className="rounded-md px-2.5 py-1 text-xs text-code-muted transition-colors hover:text-code-foreground data-[state=active]:bg-code data-[state=active]:text-code-accent"
         >
           {file.label}
         </Tabs.Trigger>
@@ -37,7 +37,7 @@ export const CodeBlock = ({ files }: CodeBlockProps) => (
         <Highlight theme={themes.vsDark} code={file.code} language={toPrismLanguage(file.lang)}>
           {({ tokens, getLineProps, getTokenProps }) => (
             <pre
-              className="max-h-80 overflow-auto p-4 font-mono text-xs leading-relaxed"
+              className="max-h-80 overflow-auto p-4 font-mono text-xs leading-relaxed text-code-foreground"
               style={{ background: 'transparent' }}
             >
               {tokens.map((line, lineIndex) => (

@@ -430,4 +430,69 @@
   .orb[data-state] .sparks {
     opacity: 0.55;
   }
+
+  .orb[data-state='idle'] .glow {
+    opacity: 0.38;
+    transform: scale(0.94);
+  }
+
+  .orb[data-state='connecting'] .glow {
+    opacity: 0.3;
+    transform: scale(0.9);
+  }
+
+  .orb[data-state='connecting'] .haloA {
+    opacity: 0.55;
+  }
+
+  .orb[data-state='connecting'] .sparks {
+    opacity: 0.35;
+  }
+
+  .orb[data-state='listening'] .glow {
+    opacity: 0.75;
+    transform: scale(1.06);
+  }
+
+  .orb[data-state='listening'] .haloB {
+    opacity: 0.85;
+    transform: rotate(40deg);
+  }
+
+  .orb[data-state='listening'] .sparks {
+    opacity: 0.85;
+  }
+
+  .orb[data-state='thinking'] .glow {
+    opacity: 0.55;
+  }
+
+  .orb[data-state='thinking'] .orbitA::before {
+    transform: rotate(120deg);
+  }
+
+  .orb[data-state='thinking'] .orbitB::before {
+    transform: rotate(320deg);
+  }
+
+  .orb[data-state='speaking'] .glow {
+    opacity: 0.9;
+    transform: scale(1.12);
+  }
+
+  .orb[data-state='speaking'] .haloA {
+    transform: rotate(100deg);
+  }
+
+  .orb[data-state='speaking'] .haloB {
+    transform: rotate(250deg);
+  }
+
+  .orb[data-state='speaking'] .sparks {
+    opacity: 1;
+  }
+
+  .orb[data-state='error'] .glow {
+    opacity: 0.6;
+  }
 }

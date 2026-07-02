@@ -71,6 +71,9 @@ export const Footer = () => (
         >
           Good first issues
         </a>
+        <a href="/llms.txt" className={LINK_CLASS}>
+          llms.txt
+        </a>
         <a
           href={X_URL}
           target="_blank"

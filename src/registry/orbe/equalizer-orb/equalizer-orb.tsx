@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { orbVars, type OrbProps } from '../../lib/orb-state';
 import { useOrbLevel } from '../../lib/use-orb-level';
 import styles from './equalizer-orb.module.css';
@@ -32,13 +32,22 @@ export const EqualizerOrb = ({
   levelRef,
   label = 'Assistant orb',
   className,
+  ref,
 }: OrbProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useOrbLevel(ref, state, levelRef);
+  const innerRef = useRef<HTMLDivElement>(null);
+  useOrbLevel(innerRef, state, levelRef);
+  const setRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      innerRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref],
+  );
 
   return (
     <div
-      ref={ref}
+      ref={setRef}
       role="img"
       aria-label={label}
       data-state={state}

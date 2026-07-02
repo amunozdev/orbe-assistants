@@ -1,13 +1,17 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   approach,
   createStateMix,
+  ERROR_COLOR_FROM,
+  ERROR_COLOR_TO,
+  hexToRgb,
   orbVars,
   type OrbProps,
   type OrbState,
 } from '../../lib/orb-state';
+import { observeActivity } from '../../lib/use-in-view';
 import { useOrbLevel } from '../../lib/use-orb-level';
 
 const TWO_PI = Math.PI * 2;
@@ -23,7 +27,6 @@ type Rgb = [number, number, number];
 
 const WHITE: Rgb = [255, 255, 255];
 const DUST_WHITE: Rgb = [235, 240, 255];
-const ERROR_RGB: Rgb = [251, 90, 110];
 
 interface Star {
   a: number;
@@ -38,29 +41,35 @@ interface Star {
   glow: boolean;
 }
 
-const hexToRgb = (hex: string): Rgb => {
-  const clean = hex.replace('#', '');
-  const full =
-    clean.length === 3
-      ? clean
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : clean;
-  const n = Number.parseInt(full, 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-};
-
 const mix = (a: Rgb, b: Rgb, t: number): Rgb => [
   a[0] + (b[0] - a[0]) * t,
   a[1] + (b[1] - a[1]) * t,
   a[2] + (b[2] - a[2]) * t,
 ];
 
+const ERROR_RGB: Rgb = mix(hexToRgb(ERROR_COLOR_FROM), hexToRgb(ERROR_COLOR_TO), 0.5);
+
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
 const spinFor = (st: OrbState): number =>
   st === 'thinking' ? 3.2 : st === 'connecting' ? 1.6 : st === 'error' ? 0.5 : st === 'disabled' ? 0.3 : 1;
+
+const staticLevelFor = (st: OrbState): number => {
+  switch (st) {
+    case 'listening':
+      return 0.78;
+    case 'speaking':
+      return 0.92;
+    case 'thinking':
+      return 0.45;
+    case 'connecting':
+      return 0.2;
+    case 'error':
+      return 0.3;
+    default:
+      return 0;
+  }
+};
 
 const rgba = (c: Rgb, a: number) =>
   `rgba(${Math.round(c[0])}, ${Math.round(c[1])}, ${Math.round(c[2])}, ${clamp01(a).toFixed(3)})`;
@@ -141,6 +150,7 @@ export const GalaxyOrb = ({
   levelRef,
   label = 'Assistant orb',
   className,
+  ref: refProp,
 }: OrbProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -148,6 +158,15 @@ export const GalaxyOrb = ({
   const speedRef = useRef(speed);
   const colorRef = useRef({ from: colorFrom, to: colorTo });
   const redrawRef = useRef<(() => void) | null>(null);
+
+  const setRootRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      ref.current = node;
+      if (typeof refProp === 'function') refProp(node);
+      else if (refProp) refProp.current = node;
+    },
+    [refProp],
+  );
 
   useEffect(() => {
     stateRef.current = state;
@@ -460,10 +479,10 @@ export const GalaxyOrb = ({
       const wDisabled = w.disabled;
       const wSpeak = w.speaking;
       const wListen = w.listening;
-      const wConn = anim ? w.connecting : 0;
-      const rawLevel = clamp01(
-        Number.parseFloat(getComputedStyle(host).getPropertyValue('--orb-level')) || 0,
-      );
+      const wConn = w.connecting;
+      const rawLevel = anim
+        ? clamp01(Number.parseFloat(getComputedStyle(host).getPropertyValue('--orb-level')) || 0)
+        : staticLevelFor(st);
       levelS = approach(levelS, rawLevel, 8, easeDt);
       const level = clamp01(levelS);
       spinCur = approach(spinCur, spinFor(st), 6, easeDt);
@@ -478,10 +497,14 @@ export const GalaxyOrb = ({
       let reveal = 1;
       let revealFade = 1;
       if (wConn > 0.004) {
-        connectT += dt * spd;
-        const cyc = (connectT * 0.55) % 1.4;
-        reveal = Math.min(1.15, cyc / 0.95);
-        revealFade = cyc > 1.25 ? Math.max(0.15, 1 - ((cyc - 1.25) / 0.15) * 0.85) : 1;
+        if (anim) {
+          connectT += dt * spd;
+          const cyc = (connectT * 0.55) % 1.4;
+          reveal = Math.min(1.15, cyc / 0.95);
+          revealFade = cyc > 1.25 ? Math.max(0.15, 1 - ((cyc - 1.25) / 0.15) * 0.85) : 1;
+        } else {
+          reveal = 0.55;
+        }
       } else {
         connectT = 0;
       }
@@ -560,8 +583,9 @@ export const GalaxyOrb = ({
       const nebConn = 0.3 + 0.7 * Math.min(1, reveal) * revealFade;
       const nebAlpha = nebBase + wConn * (nebConn - nebBase) + wError * (0.5 - nebBase);
       drawSprite(spriteNebula, nebScale, nebAlpha);
-      const armsBase = 0.88 + level * 0.12 * wSpeak;
-      drawSprite(spriteArms, 1, armsBase + wError * (0.65 - armsBase));
+      const armsBase = 0.88 + level * 0.12 * wSpeak + (anim ? 0 : 0.25 * w.thinking);
+      const armScale = anim ? 1 : 1 + 0.08 * w.thinking;
+      drawSprite(spriteArms, armScale, armsBase + wError * (0.65 - armsBase));
 
       for (const sr of STAR_LAYERS[1]) drawStar(sr);
       for (const sr of STAR_LAYERS[2]) drawStar(sr);
@@ -710,30 +734,47 @@ export const GalaxyOrb = ({
     };
 
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let reduced = mq.matches;
+    let active = true;
+
     const applyMotion = () => {
-      if (mq.matches) {
+      if (reduced) {
         stopLoop();
         renderStatic();
-      } else {
+      } else if (active) {
         startLoop();
+      } else {
+        stopLoop();
       }
     };
+
+    const onMotionChange = () => {
+      reduced = mq.matches;
+      applyMotion();
+    };
+
+    const unobserve = observeActivity(host, (next) => {
+      active = next;
+      applyMotion();
+    });
+
     applyMotion();
-    mq.addEventListener('change', applyMotion);
+    mq.addEventListener('change', onMotionChange);
     redrawRef.current = () => {
-      if (!running) renderStatic();
+      if (reduced) renderStatic();
     };
 
     return () => {
       stopLoop();
-      mq.removeEventListener('change', applyMotion);
+      unobserve();
+      mq.removeEventListener('change', onMotionChange);
       redrawRef.current = null;
     };
   }, [size]);
 
   return (
     <div
-      ref={ref}
+      ref={setRootRef}
       role="img"
       aria-label={label}
       data-state={state}

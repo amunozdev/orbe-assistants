@@ -1,8 +1,17 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import clsx from 'clsx';
-import { approach, orbVars, stateEnergy, type OrbProps } from '../../lib/orb-state';
+import {
+  ERROR_COLOR_FROM,
+  ERROR_COLOR_TO,
+  approach,
+  orbVars,
+  stateEnergy,
+  type OrbProps,
+  type OrbState,
+} from '../../lib/orb-state';
+import { observeActivity } from '../../lib/use-in-view';
 
 const GLASS_ORB_TW_CSS = `
 @property --glass-from{syntax:'<color>';inherits:true;initial-value:#a78bfa}
@@ -32,9 +41,9 @@ const GLASS_ORB_TW_CSS = `
 [data-glass-orb][data-state=thinking] [data-part=counter]{opacity:1}
 [data-glass-orb][data-state=listening]{--glass-halo-base:0.6;--glass-halo-gain:0.4;--glass-halo-swell:0.2}
 [data-glass-orb][data-state=speaking]{--glass-rim-base:0.7;--glass-rim-gain:0.45}
-[data-glass-orb][data-state=error]{--glass-from:#fb7185;--glass-to:#f43f5e;animation:glass-orb-tw-shake 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) 1}
+[data-glass-orb][data-state=error]{--glass-from:${ERROR_COLOR_FROM};--glass-to:${ERROR_COLOR_TO};animation:glass-orb-tw-shake 0.32s cubic-bezier(0.36, 0.07, 0.19, 0.97) 1}
 [data-glass-orb][data-state=disabled]{filter:grayscale(0.85);opacity:0.5}
-@media (prefers-reduced-motion: reduce){[data-glass-orb],[data-glass-orb][data-state=error],[data-glass-orb] [data-part=aura],[data-glass-orb] [data-part=sphere],[data-glass-orb] [data-part=sheen],[data-glass-orb] [data-part=spec],[data-glass-orb] [data-part=orbit],[data-glass-orb] [data-part=counter]{animation:none}}
+@media (prefers-reduced-motion: reduce){[data-glass-orb],[data-glass-orb][data-state=error],[data-glass-orb] [data-part=aura],[data-glass-orb] [data-part=sphere],[data-glass-orb] [data-part=sheen],[data-glass-orb] [data-part=spec],[data-glass-orb] [data-part=orbit],[data-glass-orb] [data-part=counter]{animation:none}[data-glass-orb] [data-part=counter]{transform:rotate(180deg)}}
 @supports not (color: light-dark(#000, #fff)){[data-glass-orb]{--glass-fill:color-mix(in oklab, var(--glass-blend), transparent 86%);--glass-edge:color-mix(in oklab, #ffffff, transparent 66%);--glass-depth:color-mix(in oklab, color-mix(in oklab, var(--glass-from), #05060c 52%), transparent 36%);--glass-contact:color-mix(in oklab, color-mix(in oklab, var(--glass-blend), #000000 40%), transparent 42%);--glass-halo-tight:transparent;--glass-halo-wide:color-mix(in oklab, var(--glass-blend), transparent 42%)}
 @media (prefers-color-scheme: light){[data-glass-orb]{--glass-fill:color-mix(in oklab, var(--glass-blend), transparent 62%);--glass-edge:color-mix(in oklab, color-mix(in oklab, var(--glass-from), #171a2b 55%), transparent 35%);--glass-depth:color-mix(in oklab, color-mix(in oklab, var(--glass-from), #10131f 42%), transparent 46%);--glass-contact:color-mix(in oklab, color-mix(in oklab, var(--glass-from), #10131f 55%), transparent 50%);--glass-halo-tight:color-mix(in oklab, var(--glass-blend), transparent 32%);--glass-halo-wide:transparent}}}
 @supports not ((backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px))){[data-glass-orb]{--glass-fill:light-dark(color-mix(in oklab, var(--glass-blend), transparent 40%), color-mix(in oklab, var(--glass-blend), transparent 64%))}}
@@ -49,6 +58,16 @@ const RING_MASK = (edge: string, inner: string, outer: string) =>
 const ARC_GRADIENT =
   'conic-gradient(from 0deg, transparent 0deg, color-mix(in oklab, var(--glass-to), #ffffff 35%) 14deg, color-mix(in oklab, var(--glass-from), #ffffff 20%) 46deg, transparent 60deg 360deg)';
 
+const REDUCED_LEVELS: Record<OrbState, number> = {
+  idle: 0,
+  connecting: 0.22,
+  listening: 0.7,
+  thinking: 0.4,
+  speaking: 0.55,
+  error: 0.2,
+  disabled: 0,
+};
+
 export const GlassOrbTw = ({
   state = 'idle',
   size = 160,
@@ -58,24 +77,39 @@ export const GlassOrbTw = ({
   levelRef,
   label = 'Assistant orb',
   className,
+  ref,
 }: OrbProps) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef(state);
+
+  const setRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      innerRef.current = node;
+      if (typeof ref === 'function') ref(node);
+      else if (ref) ref.current = node;
+    },
+    [ref],
+  );
 
   useEffect(() => {
     stateRef.current = state;
   });
 
   useEffect(() => {
-    const el = ref.current;
+    const el = innerRef.current;
+    if (!el) return;
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    el.style.setProperty('--orb-level', REDUCED_LEVELS[state].toFixed(3));
+  }, [state]);
+
+  useEffect(() => {
+    const el = innerRef.current;
     if (!el) return;
 
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      el.style.setProperty('--orb-level', '0');
-      return;
-    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     let raf = 0;
+    let running = false;
     let start: number | null = null;
     let last: number | null = null;
     let smoothed = 0;
@@ -93,8 +127,23 @@ export const GlassOrbTw = ({
       raf = requestAnimationFrame(frame);
     };
 
-    raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+    const setActive = (active: boolean) => {
+      if (active === running) return;
+      running = active;
+      if (active) {
+        last = null;
+        raf = requestAnimationFrame(frame);
+      } else {
+        cancelAnimationFrame(raf);
+      }
+    };
+
+    setActive(true);
+    const unobserve = observeActivity(el, setActive);
+    return () => {
+      unobserve();
+      cancelAnimationFrame(raf);
+    };
   }, [levelRef]);
 
   const rimMask = RING_MASK('7px', '5px', '1.5px');
@@ -102,7 +151,7 @@ export const GlassOrbTw = ({
 
   return (
     <div
-      ref={ref}
+      ref={setRef}
       role="img"
       aria-label={label}
       data-glass-orb=""
