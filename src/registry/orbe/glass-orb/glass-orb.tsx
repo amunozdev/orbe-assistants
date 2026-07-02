@@ -27,10 +27,14 @@ export const GlassOrb = ({
       className={[styles.orb, className].filter(Boolean).join(' ')}
       style={orbVars({ size, speed, colorFrom, colorTo })}
     >
+      <span className={styles.halo} />
       <span className={styles.aura} />
-      <span className={styles.counter} />
       <span className={styles.sphere} />
-      <span className={styles.highlight} />
+      <span className={styles.sheen} />
+      <span className={styles.rim} />
+      <span className={styles.spec} />
+      <span className={styles.counter} />
+      <span className={styles.grain} />
     </div>
   );
 };
