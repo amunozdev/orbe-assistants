@@ -7,7 +7,6 @@ import { PulseOrb } from '@/registry/orbe/pulse-orb/pulse-orb';
 import { GlassOrb } from '@/registry/orbe/glass-orb/glass-orb';
 import { GooeyOrb } from '@/registry/orbe/gooey-orb/gooey-orb';
 import { GalaxyOrb } from '@/registry/orbe/galaxy-orb/galaxy-orb';
-import { PixelOrb } from '@/registry/orbe/pixel-orb/pixel-orb';
 import { ParticlesOrb } from '@/registry/orbe/particles-orb/particles-orb';
 import { EqualizerOrb } from '@/registry/orbe/equalizer-orb/equalizer-orb';
 import { AuroraOrb } from '@/registry/orbe/aurora-orb/aurora-orb';
@@ -15,7 +14,6 @@ import { HaloOrb } from '@/registry/orbe/halo-orb/halo-orb';
 import { WaveformRing } from '@/registry/orbe/waveform-ring/waveform-ring';
 import { EdgeGlow } from '@/registry/orbe/edge-glow/edge-glow';
 import { IridescentFlow } from '@/registry/orbe/iridescent-flow/iridescent-flow';
-import { LiquidMetal } from '@/registry/orbe/liquid-metal/liquid-metal';
 import type { OrbProps } from '@/registry/lib/orb-state';
 
 const MAP: Record<string, ComponentType<OrbProps>> = {
@@ -23,7 +21,6 @@ const MAP: Record<string, ComponentType<OrbProps>> = {
   'glass-orb': GlassOrb,
   'gooey-orb': GooeyOrb,
   'galaxy-orb': GalaxyOrb,
-  'pixel-orb': PixelOrb,
   'particles-orb': ParticlesOrb,
   'equalizer-orb': EqualizerOrb,
   'aurora-orb': AuroraOrb,
@@ -31,7 +28,6 @@ const MAP: Record<string, ComponentType<OrbProps>> = {
   'waveform-ring': WaveformRing,
   'edge-glow': EdgeGlow,
   'iridescent-flow': IridescentFlow,
-  'liquid-metal': LiquidMetal,
 };
 
 const DEFERRED_MAP: Record<string, ComponentType<OrbProps>> = {

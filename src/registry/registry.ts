@@ -206,17 +206,6 @@ export const orbs: OrbMeta[] = [
     ],
   },
   {
-    id: 'pixel-orb',
-    name: 'Pixel Orb',
-    tagline: 'Pixel-art sphere on canvas: a grid that pulses and ripples with your voice.',
-    tech: 'Canvas',
-    dependencies: [],
-    defaultColorFrom: '#34d399',
-    defaultColorTo: '#22d3ee',
-    defaultSize: 168,
-    files: [{ label: 'pixel-orb.tsx', path: 'src/registry/orbe/pixel-orb/pixel-orb.tsx', lang: 'tsx' }],
-  },
-  {
     id: 'aurora-orb',
     name: 'Aurora Orb',
     tagline: 'Northern-lights veils that swirl and blur across a night sky.',
@@ -305,19 +294,6 @@ export const orbs: OrbMeta[] = [
     defaultSize: 168,
     files: [
       { label: 'iridescent-flow.tsx', path: 'src/registry/orbe/iridescent-flow/iridescent-flow.tsx', lang: 'tsx' },
-    ],
-  },
-  {
-    id: 'liquid-metal',
-    name: 'Liquid Metal',
-    tagline: 'Raymarched metaballs with a molten chrome finish. Raw WebGL, zero dependencies.',
-    tech: 'Shader (canvas)',
-    dependencies: [],
-    defaultColorFrom: '#94a3b8',
-    defaultColorTo: '#e2e8f0',
-    defaultSize: 168,
-    files: [
-      { label: 'liquid-metal.tsx', path: 'src/registry/orbe/liquid-metal/liquid-metal.tsx', lang: 'tsx' },
     ],
   },
   {

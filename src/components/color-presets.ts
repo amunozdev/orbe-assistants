@@ -20,7 +20,7 @@ const ORB_PRESETS: Record<string, GradientPreset[]> = {
   'iridescent-flow': [{ name: 'Iridiscente', from: '#22d3ee', to: '#a855f7' }],
   'plasma-orb': [{ name: 'Magma', from: '#f43f5e', to: '#fb923c' }],
   'aurora-orb': [{ name: 'Boreal', from: '#2dd4bf', to: '#4ade80' }],
-  'liquid-metal': [{ name: 'Cromo dorado', from: '#b45309', to: '#fde68a' }],
+  'mercury-orb': [{ name: 'Cromo dorado', from: '#b45309', to: '#fde68a' }],
 };
 
 export const presetsForOrb = (id: string): GradientPreset[] => [
