@@ -45,14 +45,16 @@ const shade = (hex: string, t: number) => mixHex(hex, '#000000', t);
 const tint = (hex: string, t: number) => mixHex(hex, '#ffffff', t);
 
 const brandPalette = (from: string, to: string): string[] => [
-  shade(from, 0.4),
+  shade(mixHex(from, to, 0.75), 0.48),
   from,
-  mixHex(from, to, 0.5),
+  tint(mixHex(from, to, 0.35), 0.75),
+  mixHex(from, to, 0.55),
+  shade(to, 0.38),
   to,
-  tint(to, 0.3),
+  tint(to, 0.35),
 ];
 
-const backFor = (from: string, to: string) => shade(mixHex(from, to, 0.5), 0.72);
+const backFor = (from: string, to: string) => shade(mixHex(from, to, 0.5), 0.82);
 
 const ERROR_PALETTE = brandPalette(ERROR_COLOR_FROM, ERROR_COLOR_TO);
 const ERROR_BACK = backFor(ERROR_COLOR_FROM, ERROR_COLOR_TO);
@@ -70,20 +72,20 @@ const MOTION_RATE = 6;
 const SPEED_RATE = 5;
 const ERROR_RATE = 6;
 const STATIC_PHASE = 0.9;
-const BASE_SCALE = 1.35;
+const BASE_SCALE = 1.02;
 
 const speedFor = (s: OrbState) =>
   s === 'error'
-    ? 1.7
+    ? 2.2
     : s === 'listening'
-      ? 1.4
+      ? 1.9
       : s === 'speaking'
-        ? 1.15
+        ? 1.6
         : s === 'thinking'
-          ? 0.55
+          ? 0.85
           : s === 'connecting'
-            ? 0.45
-            : 0.28;
+            ? 0.7
+            : 0.45;
 
 interface GrainTargets {
   softness: number;
@@ -97,31 +99,31 @@ const targetsFor = (s: OrbState, energy: number): GrainTargets => {
     case 'listening':
     case 'speaking':
       return {
-        softness: 0.75,
-        intensity: Math.min(1, 0.32 + energy * 0.5),
-        noise: Math.min(1, 0.28 + energy * 0.4),
+        softness: Math.max(0.02, 0.1 - energy * 0.08),
+        intensity: Math.min(1, 0.6 + energy * 0.4),
+        noise: Math.min(1, 0.55 + energy * 0.45),
         swell: energy,
       };
     case 'thinking':
       return {
-        softness: 0.55,
-        intensity: Math.min(1, 0.55 + energy * 0.15),
-        noise: 0.34,
+        softness: 0.28,
+        intensity: Math.min(1, 0.75 + energy * 0.2),
+        noise: 0.55,
         swell: energy * 0.4,
       };
     case 'connecting':
       return {
-        softness: 0.8,
-        intensity: Math.min(1, 0.28 + energy * 0.35),
-        noise: 0.24,
+        softness: 0.35,
+        intensity: Math.min(1, 0.5 + energy * 0.35),
+        noise: 0.48,
         swell: energy * 0.6,
       };
     case 'error':
-      return { softness: 0.45, intensity: 0.82, noise: 0.5, swell: 0.35 };
+      return { softness: 0.02, intensity: 1, noise: 0.85, swell: 0.35 };
     case 'disabled':
-      return { softness: 0.9, intensity: 0.18, noise: 0.12, swell: 0 };
+      return { softness: 0.6, intensity: 0.3, noise: 0.25, swell: 0 };
     default:
-      return { softness: 0.85, intensity: 0.24, noise: 0.18, swell: energy * 0.3 };
+      return { softness: 0.14, intensity: 0.85, noise: 0.55, swell: energy * 0.3 };
   }
 };
 
@@ -328,8 +330,8 @@ export const GrainOrb = ({
   ].map(({ key, from: f, to: t, visible }) => ({
     key,
     visible,
-    base: `radial-gradient(circle at 50% 42%, ${tint(f, 0.14)}, ${mixHex(f, t, 0.55)} 52%, ${shade(t, 0.4)} 100%)`,
-    glow: `radial-gradient(circle at 34% 28%, ${tint(t, 0.4)}, transparent 55%), radial-gradient(circle at 64% 74%, ${tint(f, 0.22)}, transparent 60%)`,
+    base: `conic-gradient(from 210deg at 42% 38%, ${shade(f, 0.5)}, ${f} 18%, ${tint(mixHex(f, t, 0.4), 0.6)} 34%, ${mixHex(f, t, 0.6)} 48%, ${t} 62%, ${shade(t, 0.55)} 78%, ${shade(f, 0.5)})`,
+    glow: `radial-gradient(circle at 36% 30%, ${tint(t, 0.5)}, transparent 40%), radial-gradient(circle at 62% 72%, ${tint(f, 0.3)}, transparent 45%), radial-gradient(circle at 50% 50%, transparent 55%, ${shade(mixHex(f, t, 0.5), 0.6)} 100%)`,
   }));
 
   return (
@@ -430,7 +432,7 @@ export const GrainOrb = ({
             borderRadius: '50%',
             pointerEvents: 'none',
             backgroundImage:
-              'radial-gradient(circle at 32% 24%, rgba(255,255,255,0.45), transparent 16%), radial-gradient(circle at 31% 27%, rgba(255,255,255,0.22), transparent 46%), radial-gradient(circle at 66% 74%, rgba(10,14,24,0.4), transparent 60%)',
+              'radial-gradient(circle at 33% 25%, rgba(255,255,255,0.16), transparent 30%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(8,10,18,0.38) 100%)',
           }}
         />
       </div>
