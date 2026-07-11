@@ -46,8 +46,13 @@ const tint = (hex: string, t: number) => mixHex(hex, '#ffffff', t);
 
 const GL_ATTRIBUTES: WebGLContextAttributes = {
   antialias: true,
+  alpha: true,
+  premultipliedAlpha: true,
   powerPreference: 'low-power',
 };
+
+const CANVAS_OVERDRAW = 1.18;
+const TRANSPARENT = '#00000000';
 
 const BASE_FRAME = 6000;
 const PUSH_INTERVAL_MS = 66;
@@ -281,16 +286,17 @@ export const DitherOrb = ({
       : errorMix <= 0
         ? colorTo
         : mixHex(colorTo, ERROR_COLOR_TO, errorMix);
-  const front = tint(mixHex(from, to, view.shift), 0.12);
-  const back = shade(mixHex(from, to, 0.5), 0.82);
+  const front = shade(mixHex(from, to, view.shift), 0.08);
+  const canvasSize = Math.round(size * CANVAS_OVERDRAW);
+  const canvasOffset = Math.round((size - canvasSize) / 2);
   const fallbackLayers = [
     { key: 'brand', from: colorFrom, to: colorTo, visible: state !== 'error' },
     { key: 'error', from: ERROR_COLOR_FROM, to: ERROR_COLOR_TO, visible: state === 'error' },
   ].map(({ key, from: f, to: t, visible }) => ({
     key,
     visible,
-    base: `radial-gradient(circle at 50% 38%, ${tint(mixHex(f, t, 0.4), 0.1)}, ${mixHex(f, t, 0.6)} 52%, ${shade(mixHex(f, t, 0.5), 0.78)} 100%)`,
-    dots: `radial-gradient(circle, ${tint(t, 0.3)} 1px, transparent 1.6px)`,
+    body: `radial-gradient(circle, ${shade(mixHex(f, t, 0.5), 0.3)} 1.5px, transparent 2.1px)`,
+    glint: `radial-gradient(circle, ${tint(t, 0.2)} 1px, transparent 1.6px)`,
   }));
 
   return (
@@ -306,7 +312,6 @@ export const DitherOrb = ({
         width: size,
         height: size,
         position: 'relative',
-        borderRadius: '50%',
         opacity: state === 'disabled' ? 0.5 : 1,
         filter: state === 'disabled' ? 'grayscale(0.85)' : 'grayscale(0)',
         transform: showShader ? `scale(${(1 + view.energy * 0.05).toFixed(4)})` : undefined,
@@ -315,58 +320,46 @@ export const DitherOrb = ({
       }}
     >
       <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          borderRadius: '50%',
-          boxShadow: `0 ${-size * 0.05}px ${size * 0.28}px color-mix(in oklab, ${from} 50%, transparent), 0 ${size * 0.05}px ${size * 0.28}px color-mix(in oklab, ${to} 50%, transparent)`,
-          opacity: showShader
-            ? Math.min(1, 0.3 + view.energy * 0.7)
-            : 'calc(0.3 + var(--orb-level, 0) * 0.65)',
-          transform: showShader ? `scale(${(1 + view.energy * 0.07).toFixed(4)})` : undefined,
-          scale: showShader ? undefined : 'calc(1 + var(--orb-level, 0) * 0.07)',
-          transition: showShader
-            ? 'opacity 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.35s ease'
-            : 'box-shadow 0.35s ease',
-        }}
-      />
-      <div
         ref={sphereRef}
         style={{
           position: 'absolute',
           inset: 0,
-          borderRadius: '50%',
-          overflow: 'hidden',
-          backgroundColor: back,
-          transition: 'background-color 0.35s ease',
         }}
       >
         {showShader ? (
-          <Dithering
-            width={size}
-            height={size}
-            colorBack={back}
-            colorFront={front}
-            shape="sphere"
-            type="4x4"
-            size={view.dotPx}
-            scale={view.pulse}
-            speed={view.shaderSpeed}
-            frame={BASE_FRAME}
-            fit="cover"
-            minPixelRatio={2}
-            webGlContextAttributes={GL_ATTRIBUTES}
-          />
+          <div
+            style={{
+              position: 'absolute',
+              top: canvasOffset,
+              left: canvasOffset,
+              width: canvasSize,
+              height: canvasSize,
+            }}
+          >
+            <Dithering
+              width={canvasSize}
+              height={canvasSize}
+              colorBack={TRANSPARENT}
+              colorFront={front}
+              shape="sphere"
+              type="4x4"
+              size={view.dotPx}
+              scale={view.pulse / CANVAS_OVERDRAW}
+              speed={view.shaderSpeed}
+              frame={BASE_FRAME}
+              fit="cover"
+              minPixelRatio={2}
+              webGlContextAttributes={GL_ATTRIBUTES}
+            />
+          </div>
         ) : (
-          <div aria-hidden style={{ position: 'absolute', inset: 0, borderRadius: '50%' }}>
+          <div aria-hidden style={{ position: 'absolute', inset: 0 }}>
             {fallbackLayers.map((layer) => (
               <div
                 key={layer.key}
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  borderRadius: '50%',
-                  backgroundImage: layer.base,
                   opacity: layer.visible ? 1 : 0,
                   transition: 'opacity 0.35s ease',
                 }}
@@ -375,27 +368,27 @@ export const DitherOrb = ({
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    borderRadius: '50%',
-                    backgroundImage: layer.dots,
+                    backgroundImage: layer.body,
+                    backgroundSize: '5px 5px',
+                    maskImage:
+                      'radial-gradient(circle at 50% 50%, black 42%, rgba(0,0,0,0.55) 58%, rgba(0,0,0,0.18) 68%, transparent 76%)',
+                  }}
+                />
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    backgroundImage: layer.glint,
                     backgroundSize: '6px 6px',
-                    maskImage: 'radial-gradient(circle at 50% 42%, black 30%, transparent 75%)',
-                    opacity: 'calc(0.3 + var(--orb-level, 0) * 0.7)',
+                    maskImage:
+                      'radial-gradient(circle at 36% 30%, black 12%, rgba(0,0,0,0.4) 32%, transparent 55%)',
+                    opacity: 'calc(0.35 + var(--orb-level, 0) * 0.65)',
                   }}
                 />
               </div>
             ))}
           </div>
         )}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: '50%',
-            pointerEvents: 'none',
-            backgroundImage:
-              'radial-gradient(circle at 31% 22%, rgba(255,255,255,0.4), transparent 14%), radial-gradient(circle at 30% 26%, rgba(255,255,255,0.18), transparent 48%), radial-gradient(circle at 68% 76%, rgba(10,14,24,0.45), transparent 60%)',
-          }}
-        />
       </div>
     </div>
   );
