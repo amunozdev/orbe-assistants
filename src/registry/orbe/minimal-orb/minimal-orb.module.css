@@ -1,0 +1,198 @@
+@property --min-from {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #818cf8;
+}
+
+@property --min-to {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #a5b4fc;
+}
+
+@property --min-breathe {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+@property --min-pulse {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --min-mark {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.orb {
+  --orb-size: 168px;
+  --orb-speed: 1;
+  --orb-color-from: #818cf8;
+  --orb-color-to: #a5b4fc;
+  --orb-level: 0;
+  --min-from: var(--orb-color-from);
+  --min-to: var(--orb-color-to);
+  --min-breathe: 1;
+  --min-pulse: 0;
+  --min-mark: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--orb-size);
+  height: var(--orb-size);
+  isolation: isolate;
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease,
+    --min-from 0.45s ease,
+    --min-to 0.45s ease,
+    --min-breathe 0.5s ease,
+    --min-pulse 0.45s ease,
+    --min-mark 0.3s ease;
+}
+
+.orb[data-state='connecting'] {
+  --min-breathe: 0;
+  --min-pulse: 1;
+  --min-from: color-mix(in oklab, var(--orb-color-from) 70%, #94a3b8);
+  --min-to: color-mix(in oklab, var(--orb-color-to) 70%, #94a3b8);
+}
+
+.orb[data-state='listening'] {
+  --min-breathe: 0;
+}
+
+.orb[data-state='speaking'] {
+  --min-breathe: 0;
+  --min-from: color-mix(in oklab, var(--orb-color-from) 86%, white);
+  --min-to: color-mix(in oklab, var(--orb-color-to) 86%, white);
+}
+
+.orb[data-state='error'] {
+  --min-breathe: 0;
+  --min-mark: 1;
+  --min-from: color-mix(in oklab, #fb7185 68%, #9ca3af);
+  --min-to: color-mix(in oklab, #f43f5e 68%, #9ca3af);
+}
+
+.orb[data-state='disabled'] {
+  --min-breathe: 0;
+  filter: grayscale(1);
+  opacity: 0.45;
+}
+
+.shaker {
+  position: absolute;
+  width: 60%;
+  height: 60%;
+  display: grid;
+  place-items: center;
+}
+
+.orb[data-state='error'] .shaker {
+  animation: shake 0.45s ease-out 1;
+}
+
+.disc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid
+    light-dark(
+      color-mix(in oklab, var(--min-to), black 22%),
+      color-mix(in oklab, var(--min-from), transparent 55%)
+    );
+  scale: calc(1 + 0.055 * var(--orb-level));
+  animation:
+    breathe calc(4.4s / var(--orb-speed)) ease-in-out infinite,
+    settle calc(2.8s / var(--orb-speed)) ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.spin {
+  position: absolute;
+  inset: -28%;
+  animation: turn calc(90s / var(--orb-speed)) linear infinite;
+}
+
+.spinTurbo {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--min-from), var(--min-to));
+  animation: turn calc(18s / var(--orb-speed)) linear infinite;
+  animation-play-state: paused;
+}
+
+.orb[data-state='thinking'] .spinTurbo {
+  animation-play-state: running;
+}
+
+.mark {
+  position: absolute;
+  width: 18%;
+  height: 4%;
+  border-radius: 999px;
+  background: color-mix(in oklab, white 84%, var(--min-from));
+  opacity: calc(0.9 * var(--min-mark));
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(calc(1 + 0.035 * var(--min-breathe)));
+  }
+}
+
+@keyframes settle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: calc(1 - 0.12 * var(--min-pulse));
+  }
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  18% {
+    transform: translateX(-2.5%);
+  }
+  42% {
+    transform: translateX(3%);
+  }
+  66% {
+    transform: translateX(-1.8%);
+  }
+  84% {
+    transform: translateX(0.8%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orb .disc,
+  .orb .spin,
+  .orb .spinTurbo,
+  .orb[data-state='error'] .shaker {
+    animation: none;
+  }
+}
