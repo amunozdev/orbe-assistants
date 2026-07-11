@@ -338,8 +338,7 @@ export const DitherOrb = ({
           borderRadius: '50%',
           overflow: 'hidden',
           backgroundColor: back,
-          boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${front} 40%, transparent), 0 0 0 1px rgba(255,255,255,0.08)`,
-          transition: 'box-shadow 0.35s ease, background-color 0.35s ease',
+          transition: 'background-color 0.35s ease',
         }}
       >
         {showShader ? (
