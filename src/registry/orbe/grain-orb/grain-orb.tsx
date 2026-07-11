@@ -54,13 +54,11 @@ const brandPalette = (from: string, to: string): string[] => [
   tint(to, 0.35),
 ];
 
-const backFor = (from: string, to: string) => shade(mixHex(from, to, 0.5), 0.82);
-
 const ERROR_PALETTE = brandPalette(ERROR_COLOR_FROM, ERROR_COLOR_TO);
-const ERROR_BACK = backFor(ERROR_COLOR_FROM, ERROR_COLOR_TO);
 
 const GL_ATTRIBUTES: WebGLContextAttributes = {
   antialias: true,
+  alpha: true,
   powerPreference: 'low-power',
 };
 
@@ -72,7 +70,7 @@ const MOTION_RATE = 6;
 const SPEED_RATE = 5;
 const ERROR_RATE = 6;
 const STATIC_PHASE = 0.9;
-const BASE_SCALE = 1.02;
+const BASE_SCALE = 0.92;
 
 const speedFor = (s: OrbState) =>
   s === 'error'
@@ -321,9 +319,6 @@ export const GrainOrb = ({
       : errorMix <= 0
         ? brandColors
         : brandColors.map((stop, index) => mixHex(stop, ERROR_PALETTE[index], errorMix));
-  const brandBack = backFor(colorFrom, colorTo);
-  const colorBack =
-    errorMix >= 1 ? ERROR_BACK : errorMix <= 0 ? brandBack : mixHex(brandBack, ERROR_BACK, errorMix);
   const fallbackLayers = [
     { key: 'brand', from: colorFrom, to: colorTo, visible: state !== 'error' },
     { key: 'error', from: ERROR_COLOR_FROM, to: ERROR_COLOR_TO, visible: state === 'error' },
@@ -331,8 +326,9 @@ export const GrainOrb = ({
     key,
     visible,
     base: `conic-gradient(from 210deg at 42% 38%, ${shade(f, 0.5)}, ${f} 18%, ${tint(mixHex(f, t, 0.4), 0.6)} 34%, ${mixHex(f, t, 0.6)} 48%, ${t} 62%, ${shade(t, 0.55)} 78%, ${shade(f, 0.5)})`,
-    glow: `radial-gradient(circle at 36% 30%, ${tint(t, 0.5)}, transparent 40%), radial-gradient(circle at 62% 72%, ${tint(f, 0.3)}, transparent 45%), radial-gradient(circle at 50% 50%, transparent 55%, ${shade(mixHex(f, t, 0.5), 0.6)} 100%)`,
+    glow: `radial-gradient(circle at 62% 72%, ${tint(f, 0.3)}, transparent 45%), radial-gradient(circle at 50% 50%, transparent 52%, ${shade(mixHex(f, t, 0.5), 0.65)} 100%)`,
   }));
+  const shadowColor = shade(mixHex(from, to, 0.5), 0.55);
 
   return (
     <div
@@ -347,7 +343,6 @@ export const GrainOrb = ({
         width: size,
         height: size,
         position: 'relative',
-        borderRadius: '50%',
         opacity: state === 'disabled' ? 0.5 : 1,
         filter: state === 'disabled' ? 'grayscale(0.85)' : 'grayscale(0)',
         transform: showShader ? `scale(${(1 + view.swell * 0.06).toFixed(4)})` : undefined,
@@ -356,19 +351,22 @@ export const GrainOrb = ({
       }}
     >
       <div
+        aria-hidden
         style={{
           position: 'absolute',
-          inset: 0,
+          left: '18%',
+          right: '18%',
+          bottom: -size * 0.09,
+          height: size * 0.11,
           borderRadius: '50%',
-          boxShadow: `0 ${-size * 0.06}px ${size * 0.3}px color-mix(in oklab, ${from} 50%, transparent), 0 ${size * 0.06}px ${size * 0.3}px color-mix(in oklab, ${to} 50%, transparent)`,
+          background: `radial-gradient(ellipse closest-side, color-mix(in oklab, ${shadowColor} 65%, transparent), transparent 78%)`,
+          filter: `blur(${(size * 0.015).toFixed(1)}px)`,
           opacity: showShader
-            ? Math.min(1, 0.32 + view.energy * 0.68)
-            : 'calc(0.32 + var(--orb-level, 0) * 0.6)',
-          transform: showShader ? `scale(${(1 + view.swell * 0.08).toFixed(4)})` : undefined,
-          scale: showShader ? undefined : 'calc(1 + var(--orb-level, 0) * 0.08)',
-          transition: showShader
-            ? 'opacity 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.35s ease'
-            : 'box-shadow 0.35s ease',
+            ? Math.max(0.18, 0.42 - view.swell * 0.22)
+            : 'calc(0.42 - var(--orb-level, 0) * 0.22)',
+          transform: showShader ? `scale(${(1 - view.swell * 0.12).toFixed(4)})` : undefined,
+          scale: showShader ? undefined : 'calc(1 - var(--orb-level, 0) * 0.12)',
+          transition: 'opacity 0.2s ease-out, transform 0.2s ease-out, background 0.35s ease',
         }}
       />
       <div
@@ -376,37 +374,50 @@ export const GrainOrb = ({
         style={{
           position: 'absolute',
           inset: 0,
-          borderRadius: '50%',
-          overflow: 'hidden',
-          boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${from} 45%, transparent), 0 0 0 1px rgba(255,255,255,0.08)`,
-          transition: 'box-shadow 0.35s ease',
         }}
       >
         {showShader ? (
-          <GrainGradient
-            width={size}
-            height={size}
-            colors={colors}
-            colorBack={colorBack}
-            shape="sphere"
-            softness={view.softness}
-            intensity={view.intensity}
-            noise={view.noise}
-            scale={BASE_SCALE + view.swell * 0.18}
-            speed={view.shaderSpeed}
-            frame={BASE_FRAME}
-            minPixelRatio={2}
-            webGlContextAttributes={GL_ATTRIBUTES}
-          />
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: 0,
+              maskImage: 'radial-gradient(circle, #000 58%, transparent 71%)',
+              WebkitMaskImage: 'radial-gradient(circle, #000 58%, transparent 71%)',
+            }}
+          >
+            <GrainGradient
+              width={size}
+              height={size}
+              colors={colors}
+              colorBack="#00000000"
+              shape="sphere"
+              softness={view.softness}
+              intensity={view.intensity}
+              noise={view.noise}
+              scale={BASE_SCALE + view.swell * 0.06}
+              speed={view.shaderSpeed}
+              frame={BASE_FRAME}
+              minPixelRatio={2}
+              webGlContextAttributes={GL_ATTRIBUTES}
+            />
+          </div>
         ) : (
-          <div aria-hidden style={{ position: 'absolute', inset: 0, borderRadius: '50%' }}>
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: 0,
+              maskImage: 'radial-gradient(circle closest-side, #000 82%, transparent 99%)',
+              WebkitMaskImage: 'radial-gradient(circle closest-side, #000 82%, transparent 99%)',
+            }}
+          >
             {fallbackLayers.map((layer) => (
               <div
                 key={layer.key}
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  borderRadius: '50%',
                   backgroundImage: layer.base,
                   opacity: layer.visible ? 1 : 0,
                   transition: 'opacity 0.35s ease',
@@ -416,7 +427,6 @@ export const GrainOrb = ({
                   style={{
                     position: 'absolute',
                     inset: 0,
-                    borderRadius: '50%',
                     backgroundImage: layer.glow,
                     opacity: 'calc(0.25 + var(--orb-level, 0) * 0.75)',
                   }}
@@ -425,16 +435,6 @@ export const GrainOrb = ({
             ))}
           </div>
         )}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: '50%',
-            pointerEvents: 'none',
-            backgroundImage:
-              'radial-gradient(circle at 33% 25%, rgba(255,255,255,0.16), transparent 30%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(8,10,18,0.38) 100%)',
-          }}
-        />
       </div>
     </div>
   );
