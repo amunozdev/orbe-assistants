@@ -288,11 +288,14 @@ export const DotOrbit = ({
         ? brandColors
         : brandColors.map((stop, index) => mixHex(stop, ERROR_PALETTE[index], errorMix));
   const coreFor = (f: string, t: string) =>
-    `radial-gradient(circle at 50% 44%, ${tint(mixHex(f, t, 0.5), 0.45)}, ${mixHex(f, t, 0.55)} 20%, ${shade(f, 0.5)} 52%, ${shade(t, 0.85)} 100%)`;
+    `radial-gradient(circle at 50% 40%, ${tint(mixHex(f, t, 0.5), 0.45)}, ${mixHex(f, t, 0.55)} 20%, ${shade(f, 0.5)} 52%, ${shade(t, 0.85)} 100%)`;
   const core = coreFor(from, to);
-  const coreGlow = `radial-gradient(circle at 50% 44%, ${tint(to, 0.8)}, ${tint(mixHex(from, to, 0.5), 0.25)} 22%, transparent 46%)`;
-  const orbitMask =
-    'radial-gradient(circle at 50% 50%, rgba(0,0,0,0.55), rgba(0,0,0,0.6) 16%, rgba(0,0,0,0.95) 32%, black 46%, black 76%, transparent 97%)';
+  const coreGlow = `radial-gradient(circle at 50% 40%, ${tint(to, 0.8)}, ${tint(mixHex(from, to, 0.5), 0.25)} 22%, transparent 46%)`;
+  const glow = `radial-gradient(circle at 50% 48%, color-mix(in oklab, ${from} 34%, transparent), color-mix(in oklab, ${to} 18%, transparent) 32%, transparent 58%)`;
+  const edgeMask =
+    'radial-gradient(ellipse 50% 50% at 50% 50%, black 56%, rgba(0,0,0,0.6) 76%, transparent 96%)';
+  const occlusionMask =
+    'radial-gradient(ellipse 27% 23% at 50% 41%, transparent 52%, rgba(0,0,0,0.8) 86%, black 100%)';
   const fallbackLayers = [
     { key: 'brand', from: colorFrom, to: colorTo, visible: state !== 'error' },
     { key: 'error', from: ERROR_COLOR_FROM, to: ERROR_COLOR_TO, visible: state === 'error' },
@@ -301,7 +304,7 @@ export const DotOrbit = ({
     visible,
     base: coreFor(f, t),
     dots: `radial-gradient(circle, #ffffff 24%, transparent 30%), radial-gradient(circle, ${tint(t, 0.35)} 26%, transparent 32%), radial-gradient(circle, ${shade(f, 0.35)} 30%, transparent 36%)`,
-    glow: `radial-gradient(circle at 50% 44%, ${tint(t, 0.6)}, transparent 55%)`,
+    glow: `radial-gradient(circle at 50% 40%, ${tint(t, 0.6)}, transparent 55%)`,
   }));
 
   return (
@@ -317,7 +320,6 @@ export const DotOrbit = ({
         width: size,
         height: size,
         position: 'relative',
-        borderRadius: '50%',
         opacity: state === 'disabled' ? 0.5 : 1,
         filter: state === 'disabled' ? 'grayscale(0.85)' : 'grayscale(0)',
         transform: showShader ? `scale(${(1 + view.energy * 0.06).toFixed(4)})` : undefined,
@@ -326,59 +328,102 @@ export const DotOrbit = ({
       }}
     >
       <div
+        aria-hidden
         style={{
           position: 'absolute',
-          inset: 0,
-          borderRadius: '50%',
-          boxShadow: `0 ${-size * 0.06}px ${size * 0.3}px color-mix(in oklab, ${from} 50%, transparent), 0 ${size * 0.06}px ${size * 0.3}px color-mix(in oklab, ${to} 50%, transparent)`,
+          inset: '-24%',
+          backgroundImage: glow,
           opacity: showShader
-            ? Math.min(1, 0.3 + view.energy * 0.65)
-            : 'calc(0.3 + var(--orb-level, 0) * 0.6)',
+            ? Math.min(1, 0.35 + view.energy * 0.65)
+            : 'calc(0.35 + var(--orb-level, 0) * 0.6)',
           transform: showShader ? `scale(${(1 + view.energy * 0.08).toFixed(4)})` : undefined,
           scale: showShader ? undefined : 'calc(1 + var(--orb-level, 0) * 0.08)',
-          transition: showShader
-            ? 'opacity 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.35s ease'
-            : 'box-shadow 0.35s ease',
+          transition: showShader ? 'opacity 0.2s ease-out, transform 0.2s ease-out' : undefined,
         }}
       />
       <div
         ref={sphereRef}
         style={{
           position: 'absolute',
-          inset: 0,
+          inset: '18%',
           borderRadius: '50%',
           overflow: 'hidden',
           backgroundImage: core,
-          boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${from} 45%, transparent), 0 0 0 1px rgba(255,255,255,0.08)`,
-          transition: 'box-shadow 0.35s ease',
         }}
       >
+        {showShader ? (
+          <div
+            aria-hidden
+            style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              backgroundImage: coreGlow,
+              opacity: Math.min(1, 0.3 + view.energy * 0.7),
+              transition: 'opacity 0.2s ease-out',
+            }}
+          />
+        ) : (
+          fallbackLayers.map((layer) => (
+            <div
+              key={layer.key}
+              aria-hidden
+              style={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '50%',
+                backgroundImage: layer.base,
+                opacity: layer.visible ? 1 : 0,
+                transition: 'opacity 0.35s ease',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '50%',
+                  backgroundImage: layer.glow,
+                  opacity: 'calc(0.25 + var(--orb-level, 0) * 0.75)',
+                }}
+              />
+            </div>
+          ))
+        )}
         <div
           aria-hidden
           style={{
             position: 'absolute',
             inset: 0,
             borderRadius: '50%',
-            backgroundImage: coreGlow,
-            opacity: showShader
-              ? Math.min(1, 0.3 + view.energy * 0.7)
-              : 'calc(0.3 + var(--orb-level, 0) * 0.7)',
-            transition: 'opacity 0.2s ease-out',
+            pointerEvents: 'none',
+            backgroundImage:
+              'radial-gradient(circle at 32% 24%, rgba(255,255,255,0.35), transparent 14%), radial-gradient(circle at 32% 28%, rgba(255,255,255,0.12), transparent 46%), radial-gradient(circle at 50% 116%, rgba(8,10,20,0.5), transparent 55%)',
           }}
         />
+      </div>
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: '-12%',
+          pointerEvents: 'none',
+          maskImage: occlusionMask,
+          WebkitMaskImage: occlusionMask,
+        }}
+      >
         {showShader ? (
           <div
             style={{
               position: 'absolute',
-              inset: '-18%',
+              inset: 0,
               transform: `rotate(-18deg) scaleY(0.86) scale(${(1 + view.energy * 0.1).toFixed(4)})`,
-              maskImage: orbitMask,
-              WebkitMaskImage: orbitMask,
+              maskImage: edgeMask,
+              WebkitMaskImage: edgeMask,
             }}
           >
             <DotOrbitShader
-              width={size * 1.36}
-              height={size * 1.36}
+              width={size * 1.24}
+              height={size * 1.24}
               colors={colors}
               colorBack="#00000000"
               size={view.dotSize}
@@ -393,55 +438,24 @@ export const DotOrbit = ({
             />
           </div>
         ) : (
-          <div aria-hidden style={{ position: 'absolute', inset: 0, borderRadius: '50%' }}>
-            {fallbackLayers.map((layer) => (
-              <div
-                key={layer.key}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: '50%',
-                  backgroundImage: layer.base,
-                  opacity: layer.visible ? 1 : 0,
-                  transition: 'opacity 0.35s ease',
-                }}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: '-18%',
-                    backgroundImage: layer.dots,
-                    backgroundSize: `${size * 0.2}px ${size * 0.2}px, ${size * 0.15}px ${size * 0.15}px, ${size * 0.12}px ${size * 0.12}px`,
-                    backgroundPosition: `0 0, ${size * 0.07}px ${size * 0.08}px, ${size * 0.03}px ${size * 0.12}px`,
-                    transform: 'rotate(-18deg) scaleY(0.86)',
-                    maskImage: orbitMask,
-                    WebkitMaskImage: orbitMask,
-                    opacity: 'calc(0.6 + var(--orb-level, 0) * 0.4)',
-                  }}
-                />
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    borderRadius: '50%',
-                    backgroundImage: layer.glow,
-                    opacity: 'calc(0.25 + var(--orb-level, 0) * 0.75)',
-                  }}
-                />
-              </div>
-            ))}
-          </div>
+          fallbackLayers.map((layer) => (
+            <div
+              key={layer.key}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                backgroundImage: layer.dots,
+                backgroundSize: `${size * 0.2}px ${size * 0.2}px, ${size * 0.15}px ${size * 0.15}px, ${size * 0.12}px ${size * 0.12}px`,
+                backgroundPosition: `0 0, ${size * 0.07}px ${size * 0.08}px, ${size * 0.03}px ${size * 0.12}px`,
+                transform: 'rotate(-18deg) scaleY(0.86)',
+                maskImage: edgeMask,
+                WebkitMaskImage: edgeMask,
+                opacity: layer.visible ? 'calc(0.6 + var(--orb-level, 0) * 0.4)' : 0,
+                transition: 'opacity 0.35s ease',
+              }}
+            />
+          ))
         )}
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            borderRadius: '50%',
-            pointerEvents: 'none',
-            backgroundImage:
-              'radial-gradient(circle at 31% 22%, rgba(255,255,255,0.45), transparent 12%), radial-gradient(circle at 30% 26%, rgba(255,255,255,0.16), transparent 44%), radial-gradient(circle at 50% 118%, rgba(8,10,20,0.55), transparent 55%)',
-          }}
-        />
       </div>
     </div>
   );
