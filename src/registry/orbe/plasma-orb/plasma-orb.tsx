@@ -265,10 +265,10 @@ export const PlasmaOrb = ({
     const shake = el.animate(
       [
         { transform: 'translateX(0)' },
-        { transform: 'translateX(-3px)' },
+        { transform: 'translateX(-1.5px)' },
         { transform: 'translateX(3px)' },
         { transform: 'translateX(-2px)' },
-        { transform: 'translateX(2px)' },
+        { transform: 'translateX(1px)' },
         { transform: 'translateX(0)' },
       ],
       { duration: 340, easing: 'ease-out' },
@@ -306,8 +306,15 @@ export const PlasmaOrb = ({
       : errorMix <= 0
         ? brandColors
         : brandColors.map((stop, index) => mixHex(stop, ERROR_PALETTE[index], errorMix));
-  const fallbackBase = `radial-gradient(circle at 50% 40%, ${tint(from, 0.12)}, ${mixHex(from, to, 0.55)} 55%, ${shade(to, 0.35)} 100%)`;
-  const fallbackGlow = `radial-gradient(circle at 32% 26%, ${tint(to, 0.45)}, transparent 55%), radial-gradient(circle at 66% 72%, ${tint(from, 0.2)}, transparent 62%)`;
+  const fallbackLayers = [
+    { key: 'brand', from: colorFrom, to: colorTo, visible: state !== 'error' },
+    { key: 'error', from: ERROR_COLOR_FROM, to: ERROR_COLOR_TO, visible: state === 'error' },
+  ].map(({ key, from: f, to: t, visible }) => ({
+    key,
+    visible,
+    base: `radial-gradient(circle at 50% 40%, ${tint(f, 0.12)}, ${mixHex(f, t, 0.55)} 55%, ${shade(t, 0.35)} 100%)`,
+    glow: `radial-gradient(circle at 32% 26%, ${tint(t, 0.45)}, transparent 55%), radial-gradient(circle at 66% 72%, ${tint(f, 0.2)}, transparent 62%)`,
+  }));
 
   return (
     <div
@@ -341,7 +348,9 @@ export const PlasmaOrb = ({
             : 'calc(0.35 + var(--orb-level, 0) * 0.6)',
           transform: showShader ? `scale(${(1 + view.energy * 0.08).toFixed(4)})` : undefined,
           scale: showShader ? undefined : 'calc(1 + var(--orb-level, 0) * 0.08)',
-          transition: showShader ? 'opacity 0.2s ease-out, transform 0.2s ease-out' : undefined,
+          transition: showShader
+            ? 'opacity 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.35s ease'
+            : 'box-shadow 0.35s ease',
         }}
       />
       <div
@@ -352,6 +361,7 @@ export const PlasmaOrb = ({
           borderRadius: '50%',
           overflow: 'hidden',
           boxShadow: `inset 0 0 0 1px color-mix(in oklab, ${from} 45%, transparent), 0 0 0 1px rgba(255,255,255,0.08)`,
+          transition: 'box-shadow 0.35s ease',
         }}
       >
         {showShader ? (
@@ -370,24 +380,30 @@ export const PlasmaOrb = ({
             webGlContextAttributes={GL_ATTRIBUTES}
           />
         ) : (
-          <div
-            aria-hidden
-            style={{
-              position: 'absolute',
-              inset: 0,
-              borderRadius: '50%',
-              backgroundImage: fallbackBase,
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                borderRadius: '50%',
-                backgroundImage: fallbackGlow,
-                opacity: 'calc(0.25 + var(--orb-level, 0) * 0.75)',
-              }}
-            />
+          <div aria-hidden style={{ position: 'absolute', inset: 0, borderRadius: '50%' }}>
+            {fallbackLayers.map((layer) => (
+              <div
+                key={layer.key}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: '50%',
+                  backgroundImage: layer.base,
+                  opacity: layer.visible ? 1 : 0,
+                  transition: 'opacity 0.35s ease',
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '50%',
+                    backgroundImage: layer.glow,
+                    opacity: 'calc(0.25 + var(--orb-level, 0) * 0.75)',
+                  }}
+                />
+              </div>
+            ))}
           </div>
         )}
         <div

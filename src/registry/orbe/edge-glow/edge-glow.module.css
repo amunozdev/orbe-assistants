@@ -27,7 +27,6 @@
   --edge-width: clamp(1.5px, calc(var(--orb-size) * 0.014), 3px);
   --edge-radius: 24px;
   --edge-inset: 4px;
-  --edge-spin: 14;
   --edge-glow: 0.3;
   --edge-line: 0.5;
   --edge-boost: 0;
@@ -47,7 +46,6 @@
 }
 
 .frame[data-state='listening'] {
-  --edge-spin: 9;
   --edge-glow: 0.42;
   --edge-line: 0.62;
   --edge-boost: 1;
@@ -58,14 +56,12 @@
 }
 
 .frame[data-state='speaking'] {
-  --edge-spin: 3;
   --edge-glow: 0.52;
   --edge-line: 0.72;
   --edge-boost: 1;
 }
 
 .frame[data-state='error'] {
-  --edge-spin: 8;
   --edge-glow: 0.48;
   --edge-line: 0.75;
 }
@@ -105,7 +101,14 @@
   );
   filter: blur(9px) brightness(calc(1 + 0.7 * var(--orb-level) * var(--edge-boost)));
   opacity: calc(var(--edge-glow) + 0.45 * var(--orb-level) * var(--edge-boost));
-  animation: edgeSpin calc(var(--edge-spin) * 1s / var(--orb-speed)) linear infinite;
+  animation:
+    edgeSpin calc(14s / var(--orb-speed)) linear infinite,
+    edgeSpin calc(25.2s / var(--orb-speed)) linear infinite,
+    edgeSpin calc(3.818s / var(--orb-speed)) linear infinite,
+    edgeSpin calc(18.667s / var(--orb-speed)) linear infinite,
+    edgeThrob calc(1.3s / var(--orb-speed)) ease-in-out infinite;
+  animation-composition: replace, add, add, add, replace;
+  animation-play-state: running, paused, paused, paused, paused;
 }
 
 .band {
@@ -116,7 +119,13 @@
     var(--edge-from)
   );
   opacity: calc(var(--edge-line) + 0.32 * var(--orb-level) * var(--edge-boost));
-  animation: edgeSpin calc(var(--edge-spin) * 1s / var(--orb-speed)) linear infinite;
+  animation:
+    edgeSpin calc(14s / var(--orb-speed)) linear infinite,
+    edgeSpin calc(25.2s / var(--orb-speed)) linear infinite,
+    edgeSpin calc(3.818s / var(--orb-speed)) linear infinite,
+    edgeSpin calc(18.667s / var(--orb-speed)) linear infinite;
+  animation-composition: replace, add, add, add;
+  animation-play-state: running, paused, paused, paused;
 }
 
 .sweep {
@@ -160,10 +169,28 @@
   opacity: 0.9;
 }
 
+.frame[data-state='listening'] .aura {
+  animation-play-state: running, running, paused, paused, paused;
+}
+
+.frame[data-state='listening'] .band {
+  animation-play-state: running, running, paused, paused;
+}
+
+.frame[data-state='speaking'] .aura {
+  animation-play-state: running, paused, running, paused, paused;
+}
+
+.frame[data-state='speaking'] .band {
+  animation-play-state: running, paused, running, paused;
+}
+
 .frame[data-state='error'] .aura {
-  animation:
-    edgeSpin calc(var(--edge-spin) * 1s / var(--orb-speed)) linear infinite,
-    edgeThrob calc(1.3s / var(--orb-speed)) ease-in-out infinite;
+  animation-play-state: running, paused, paused, running, running;
+}
+
+.frame[data-state='error'] .band {
+  animation-play-state: running, paused, paused, running;
 }
 
 .frame[data-state='disabled'] .aura,

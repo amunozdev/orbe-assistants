@@ -281,24 +281,28 @@ const ERR_TO_RGB = hexToRgb(ERROR_COLOR_TO);
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
-const fallbackStyle = (
+const fallbackLayerStyle = (
   state: OrbState,
-  size: number,
-  colorFrom: string,
-  colorTo: string,
-): CSSProperties => {
-  const from = state === 'error' ? ERROR_COLOR_FROM : colorFrom;
-  const to = state === 'error' ? ERROR_COLOR_TO : colorTo;
-  return {
-    width: size,
-    height: size,
-    borderRadius: '50%',
-    background: `radial-gradient(circle at 32% 26%, ${to}, ${from} 52%, rgba(10, 14, 24, 0.92) 96%)`,
-    boxShadow: `inset -8px -10px 24px rgba(10, 14, 24, 0.55), inset 6px 8px 18px rgba(255, 255, 255, 0.18), 0 0 ${FALLBACK_GLOW[state]}px ${to}66`,
-    filter: state === 'disabled' ? 'grayscale(0.9)' : undefined,
-    transition: 'box-shadow 0.3s ease, filter 0.3s ease',
-  };
-};
+  from: string,
+  to: string,
+  visible: boolean,
+): CSSProperties => ({
+  position: 'absolute',
+  inset: 0,
+  borderRadius: '50%',
+  background: `radial-gradient(circle at 32% 26%, ${to}, ${from} 52%, rgba(10, 14, 24, 0.92) 96%)`,
+  boxShadow: `inset -8px -10px 24px rgba(10, 14, 24, 0.55), inset 6px 8px 18px rgba(255, 255, 255, 0.18), 0 0 ${FALLBACK_GLOW[state]}px ${to}66`,
+  opacity: visible ? 1 : 0,
+  transition: 'box-shadow 0.3s ease, opacity 0.35s ease',
+});
+
+const fallbackStyle = (state: OrbState, size: number): CSSProperties => ({
+  width: size,
+  height: size,
+  position: 'relative',
+  filter: state === 'disabled' ? 'grayscale(0.9)' : undefined,
+  transition: 'filter 0.3s ease',
+});
 
 export const LiquidMetal = ({
   state = 'idle',
@@ -574,7 +578,10 @@ export const LiquidMetal = ({
       {support === true && !failed ? (
         <canvas ref={canvasRef} style={{ width: size, height: size }} />
       ) : (
-        <div style={fallbackStyle(state, size, colorFrom, colorTo)} />
+        <div style={fallbackStyle(state, size)}>
+          <div style={fallbackLayerStyle(state, colorFrom, colorTo, state !== 'error')} />
+          <div style={fallbackLayerStyle(state, ERROR_COLOR_FROM, ERROR_COLOR_TO, state === 'error')} />
+        </div>
       )}
     </div>
   );

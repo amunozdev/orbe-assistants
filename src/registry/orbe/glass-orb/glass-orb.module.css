@@ -343,7 +343,7 @@
     transform: translateX(0);
   }
   20% {
-    transform: translateX(-4px);
+    transform: translateX(-2px);
   }
   40% {
     transform: translateX(4px);
@@ -352,7 +352,7 @@
     transform: translateX(-3px);
   }
   80% {
-    transform: translateX(2px);
+    transform: translateX(1.5px);
   }
 }
 

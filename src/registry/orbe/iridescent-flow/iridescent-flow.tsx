@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import {
   approach,
   createStateMix,
@@ -400,8 +401,14 @@ export const IridescentFlow = ({
   }, [size, showCanvas, levelRef]);
 
   const isError = state === 'error';
-  const fbFrom = isError ? ERROR_COLOR_FROM : colorFrom;
-  const fbTo = isError ? ERROR_COLOR_TO : colorTo;
+  const fallbackLayer = (from: string, to: string): CSSProperties => ({
+    position: 'absolute',
+    inset: 0,
+    borderRadius: '50%',
+    background: `radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.45), transparent 44%), conic-gradient(from 210deg, ${from}, ${to}, ${from}, ${to}, ${from})`,
+    boxShadow: `0 0 calc(${Math.round(size * 0.08)}px + var(--orb-level, 0) * ${Math.round(size * 0.2)}px) color-mix(in oklab, ${to} 55%, transparent)`,
+    transition: 'opacity 0.35s ease',
+  });
 
   return (
     <div
@@ -430,13 +437,14 @@ export const IridescentFlow = ({
           style={{
             width: '100%',
             height: '100%',
-            borderRadius: '50%',
-            background: `radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.45), transparent 44%), conic-gradient(from 210deg, ${fbFrom}, ${fbTo}, ${fbFrom}, ${fbTo}, ${fbFrom})`,
-            boxShadow: `0 0 calc(${Math.round(size * 0.08)}px + var(--orb-level, 0) * ${Math.round(size * 0.2)}px) color-mix(in oklab, ${fbTo} 55%, transparent)`,
+            position: 'relative',
             opacity: fallbackOpacity(state),
             transition: 'opacity 0.3s ease',
           }}
-        />
+        >
+          <div style={{ ...fallbackLayer(colorFrom, colorTo), opacity: isError ? 0 : 1 }} />
+          <div style={{ ...fallbackLayer(ERROR_COLOR_FROM, ERROR_COLOR_TO), opacity: isError ? 1 : 0 }} />
+        </div>
       )}
     </div>
   );
